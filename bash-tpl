@@ -1,0 +1,456 @@
+#!/usr/bin/env bash
+
+# Arg Check - Bail early if invalid
+#
+if [ -z "${1}" -o ! -r "${1}" ]; then
+	echo "File not found: ${1}"
+	exit 1
+fi
+
+STATEMENT_BLOCK_REGEX='^([[:blank:]]*)%$'
+STATEMENT_REGEX='^([[:blank:]]*)%[[:blank:]]+(.*)$'
+TEXT_REGEX='^([[:blank:]]*)([^[:blank:]](.*))?$'
+
+TAG_TEXT_REGEX='^([^{]+)(.*)'
+TAG_BRACE_REGEX='^{{((([^}])|(}[^}]))*)}}(.*)'
+TAG_QUOTE_REGEX='^{"((([^"])|("[^}]))*)"}(.*)'
+TAG_STATEMENT_REGEX='^{%((([^%])|(%[^}]))*)%}(.*)'
+
+STATES=()       # empty => DEFAULT
+STATE="DEFAULT" # [ DEFAULT, MAYBE_TXT_BLOCK, TXT_BLOCK, START_STMT_BLOCK, STMT_BLOCK]
+
+PRINT_INDENTS=()
+STATEMENT_INDENTS=()
+TEXT_INDENTS=()
+
+##
+# trim varname
+#
+function trim() {
+	read -rd '' $1 <<<"${!1}"
+}
+
+function push_state() {
+	STATES+=( "${1}" )
+}
+
+function pop_state() {
+	if [[ ${#STATES[@]} -gt 0 ]]; then
+		echo "${STATES[${#STATES[@]}-1]}"
+		unset   STATES[${#STATES[@]}-1]
+	else
+		echo "DEFAULT"
+	fi
+}
+
+function peek_state() {
+	if [[ ${#STATES[@]} -gt 0 ]]; then
+		echo  "${STATES[${#STATES[@]}-1]}"
+	else
+		echo "DEFAULT"
+	fi
+}
+
+function push_statement_indent() {
+	STATEMENT_INDENTS+=( "${1}" )
+}
+
+function pop_statement_indent() {
+	if [[ ${#STATEMENT_INDENTS[@]} -gt 0 ]]; then
+		echo "${STATEMENT_INDENTS[${#STATEMENT_INDENTS[@]}-1]}"
+		unset   STATEMENT_INDENTS[${#STATEMENT_INDENTS[@]}-1]
+	else
+		echo ""
+	fi
+}
+
+function peek_statement_indent() {
+	if [[ ${#STATEMENT_INDENTS[@]} -gt 0 ]]; then
+		echo  "${STATEMENT_INDENTS[${#STATEMENT_INDENTS[@]}-1]}"
+	else
+		echo ""
+	fi
+}
+
+function push_text_indent() {
+	TEXT_INDENTS+=( "${1}" )
+}
+
+function pop_text_indent() {
+	if [[ ${#TEXT_INDENTS[@]} -gt 0 ]]; then
+		echo "${TEXT_INDENTS[${#TEXT_INDENTS[@]}-1]}"
+		unset   TEXT_INDENTS[${#TEXT_INDENTS[@]}-1]
+	else
+		echo ""
+	fi
+}
+
+function peek_text_indent() {
+	if [[ ${#TEXT_INDENTS[@]} -gt 0 ]]; then
+		echo  "${TEXT_INDENTS[${#TEXT_INDENTS[@]}-1]}"
+	else
+		echo ""
+	fi
+}
+
+function push_print_indent() {
+	PRINT_INDENTS+=( "${1}" )
+}
+
+function pop_print_indent() {
+	if [[ ${#PRINT_INDENTS[@]} -gt 0 ]]; then
+		echo "${PRINT_INDENTS[${#PRINT_INDENTS[@]}-1]}"
+		unset   PRINT_INDENTS[${#PRINT_INDENTS[@]}-1]
+	else
+		echo ""
+	fi
+}
+
+function peek_print_indent() {
+	if [[ ${#PRINT_INDENTS[@]} -gt 0 ]]; then
+		echo  "${PRINT_INDENTS[${#PRINT_INDENTS[@]}-1]}"
+	else
+		echo ""
+	fi
+}
+
+function print_statement_indent() {
+	printf "%s" "${1}"
+}
+
+function print_statement() {
+	printf "%s\n" "${1}"
+}
+
+function get_statement_block_indent() {
+	local indent="${1}"
+	local n=$(( ${#PRINT_INDENTS[@]} - 1 ))
+	if [[ ${n} -ge 0 ]]; then
+		local text_indent="${TEXT_INDENTS[n]}"
+		local print_indent="${PRINT_INDENTS[n]}"
+		if [[ "${indent}" == "${text_indent}"* ]]; then
+			indent="${print_indent}${indent/#$text_indent}"
+		else
+			break
+		fi
+	fi
+	printf "%s" "${indent}"
+}
+
+function get_text_indent() {
+	local indent="${1}"
+	local n=$(( ${#PRINT_INDENTS[@]} - 1 ))
+	while [[ ${n} -ge 0 ]]; do
+		local text_indent="${TEXT_INDENTS[n]}"
+		local print_indent="${PRINT_INDENTS[n]}"
+		if [[ "${indent}" == "${text_indent}"* ]]; then
+			indent="${print_indent}${indent/#$text_indent}"
+		else
+			break
+		fi
+		n=$(( n - 1 ))
+	done
+	printf "%s" "${indent}"
+}
+
+function process_tags() {
+	local line="${1}"
+	local formats=()
+	local args=()
+	while [ -n "${line}" ]; do
+		if [[ "${line}" =~ $TAG_TEXT_REGEX ]]; then
+			formats+=( '%q' )
+			args+=( "${BASH_REMATCH[1]}" )
+			line="${BASH_REMATCH[2]}"
+		elif [[ "${line}" =~ $TAG_BRACE_REGEX ]]; then
+			formats+=( '%s' )
+			trim BASH_REMATCH[1]
+			args+=( "\"${BASH_REMATCH[1]}\"" )
+			line="${BASH_REMATCH[5]}"
+		elif [[ "${line}" =~ $TAG_QUOTE_REGEX ]]; then
+			formats+=( '%s' )
+			args+=( "\"${BASH_REMATCH[1]}\"" )
+			line="${BASH_REMATCH[5]}"
+		elif [[ "${line}" =~ $TAG_STATEMENT_REGEX ]]; then
+			formats+=( '%s' )
+			trim BASH_REMATCH[1]
+			args+=( "\"\$(${BASH_REMATCH[1]})\"" )
+			line="${BASH_REMATCH[5]}"
+		fi
+	done
+	local format=$( printf "%s" "${formats[@]}" )
+	line=$( printf "${format}" "${args[@]}" )
+	if [ -n "${line}" ]; then
+		printf "printf \"%%s\\\\n\" %s\n" "${line}"
+	else
+		printf "printf \"\\\\n\"\n"
+	fi
+}
+
+function print_text() {
+	print_statement_indent "${1}"
+	local indent=$( get_text_indent "$1" )
+	process_tags "${indent}${2}"
+}
+
+#######################################################################
+# State Handlers
+#######################################################################
+
+# Not inside any blocks
+# Assumes *_INDENT arrays are empty
+#
+function handle_DEFAULT() {
+	# Line is a statement
+	#
+	if [[ "${1}" =~ $STATEMENT_REGEX ]]; then
+		push_statement_indent "${BASH_REMATCH[1]}"
+		print_statement_indent "${BASH_REMATCH[1]}"
+		print_statement "${BASH_REMATCH[2]}"
+		STATE="MAYBE_TXT_BLOCK"
+	# Line is a statement block start
+	#
+	elif [[ "${1}" =~ $STATEMENT_BLOCK_REGEX ]]; then
+		push_statement_indent "${BASH_REMATCH[1]}"
+		STATE="START_STMT_BLOCK"
+	# Line is text
+	# NOTE : Check LAST because *everything* looks like text
+	#
+	elif [[ "${1}" =~ $TEXT_REGEX ]]; then
+		print_text "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+	fi
+}
+
+##
+# Previous line was a statement
+# We might be starting a text block
+#
+function handle_MAYBE_TXT_BLOCK() {
+	# Current line is also a statment
+	#
+	if [[ "${1}" =~ $STATEMENT_REGEX ]]; then
+		local statement_indent=$( peek_statement_indent )
+		# Current statement is indented
+		#
+		if [[ "${BASH_REMATCH[1]}" == "${statement_indent}"* && ${#BASH_REMATCH[1]} -gt ${#statement_indent} ]]; then
+			# Prev statement IS a text block
+			#
+			push_text_indent "${BASH_REMATCH[1]}"
+			push_print_indent "${statement_indent}"
+			push_state "TXT_BLOCK"
+			# Current statement is Maybe a TXT Block
+			#
+			push_statement_indent "${BASH_REMATCH[1]}"
+			STATE="MAYBE_TXT_BLOCK"
+		# Current statement is NOT indented
+		#
+		else
+			# Prev statement is NOT a text block
+			# Discard saved state
+			#
+			pop_statement_indent >> /dev/null
+			# Current statement is Maybe a TXT Block
+			#
+			push_statement_indent "${BASH_REMATCH[1]}"
+			STATE="MAYBE_TXT_BLOCK"
+		fi
+		print_statement_indent "${BASH_REMATCH[1]}"
+		print_statement "${BASH_REMATCH[2]}"
+	# Current line is a STMT Start Block
+	#
+	elif [[ "${1}" =~ $STATEMENT_BLOCK_REGEX ]]; then
+		local statement_indent=$( peek_statement_indent )
+		# Statement Start is indented
+		#
+		if [[ "${BASH_REMATCH[1]}" == "${statement_indent}"* && ${#BASH_REMATCH[1]} -gt ${#statement_indent} ]]; then
+			# Prev statement IS a text block
+			#
+			push_text_indent "${BASH_REMATCH[1]}"
+			push_print_indent "${statement_indent}"
+			push_state "TXT_BLOCK"
+		# Current statement is NOT indented
+		#
+		else
+			# Prev statement is NOT a text block
+			# Discard saved state
+			#
+			pop_statement_indent >> /dev/null
+		fi
+		# Current statement is STMT Start Block
+		#
+		push_statement_indent "${BASH_REMATCH[1]}"
+		STATE="START_STMT_BLOCK"
+	# Line is text
+	#
+	elif [[ "${1}" =~ $TEXT_REGEX ]]; then
+		local statement_indent=$( peek_statement_indent )
+		# Text is indented
+		#
+		if [[ "${BASH_REMATCH[1]}" ==  "${statement_indent}"* && ${#BASH_REMATCH[1]} -gt ${#statement_indent} ]]; then
+			# Prev statement IS a text block
+			#
+			push_text_indent "${BASH_REMATCH[1]}"
+			push_print_indent "${statement_indent}"
+			push_state "TXT_BLOCK"
+		# Text is NOT indented
+		#
+		else
+			# Prev statement is NOT a text block
+			# Discard statement indent
+			#
+			pop_statement_indent >> /dev/null
+		fi
+		print_text "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+		STATE=$( peek_state )
+	fi
+}
+
+function handle_TXT_BLOCK() {
+	# Current line is a statment
+	#
+	if [[ "${1}" =~ $STATEMENT_REGEX ]]; then
+		local statement_indent=$( peek_statement_indent )
+		# Current statement is at same level as block-start statement
+		#
+		if [[ "${BASH_REMATCH[1]}" == "${statement_indent}" ]]; then
+			# End of text block
+			# Discard saved state
+			#
+			pop_statement_indent >> /dev/null
+			pop_text_indent      >> /dev/null
+			pop_print_indent     >> /dev/null
+			pop_state            >> /dev/null
+			STATE=$( peek_state )
+			print_statement_indent "${BASH_REMATCH[1]}"
+			print_statement "${BASH_REMATCH[2]}"
+		# Current statement is indented
+		#
+		elif [[ "${BASH_REMATCH[1]}" == "${statement_indent}"* && ${#BASH_REMATCH[1]} -gt ${#statement_indent} ]]; then
+			# Current statement is Maybe a TXT Block
+			#
+			push_statement_indent "${BASH_REMATCH[1]}"
+			STATE="MAYBE_TXT_BLOCK"
+			print_statement_indent "${BASH_REMATCH[1]}"
+			print_statement "${BASH_REMATCH[2]}"
+		# Current statement is NOT indented
+		#
+		else
+			# Print leading indentation as-is
+			# Do NOT treat statement as a MAYBE TEXT BlOCK
+			#
+			print_statement "${1}"
+		fi
+	# Current line is a STMT Start Block
+	#
+	elif [[ "${1}" =~ $STATEMENT_BLOCK_REGEX ]]; then
+		push_statement_indent "${BASH_REMATCH[1]}"
+		STATE="START_STMT_BLOCK"
+	# Line is text
+	#
+	elif [[ "${1}" =~ $TEXT_REGEX ]]; then
+		local statement_indent=$( peek_statement_indent )
+		# Text is indented
+		#
+		if [[ "${BASH_REMATCH[1]}" ==  "${statement_indent}"* && ${#BASH_REMATCH[1]} -gt ${#statement_indent} ]]; then
+			# Adjust and print
+			#
+			print_text "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+		# Text is NOT indented
+		#
+		else
+			# Print leading indentation as-is
+			#
+			print_statement_indent "${BASH_REMATCH[1]}"
+			print_text "" "${BASH_REMATCH[2]}"
+		fi
+	fi
+}
+
+function handle_START_STMT_BLOCK() {
+	# Current line is a statement block end
+	#
+	if [[ "${1}" =~ $STATEMENT_BLOCK_REGEX ]]; then
+		# End of statement block
+		# Discard saved state
+		#
+		pop_statement_indent >> /dev/null
+		STATE=$( peek_state )
+	# Line is text (assumed to be a statement)
+	#
+	elif [[ "${1}" =~ $TEXT_REGEX ]]; then
+		local statement_indent=$( peek_statement_indent )
+		# Statement is indented
+		#
+		if [[ "${BASH_REMATCH[1]}" ==  "${statement_indent}"* && ${#BASH_REMATCH[1]} -gt ${#statement_indent} ]]; then
+			# Statement Block has begun
+			#
+			push_text_indent "${BASH_REMATCH[1]}"
+			push_print_indent "${statement_indent}"
+			push_state "STMT_BLOCK"
+			# Adjust and print
+			#
+			local indent=$( get_statement_block_indent "${BASH_REMATCH[1]}" )
+			print_statement "${indent}${BASH_REMATCH[2]}"
+		# Statement is NOT indented
+		#
+		else
+			push_text_indent ""
+			push_print_indent ""
+			push_state "STMT_BLOCK"
+			# Print leading indentation as-is
+			#
+			print_statement_indent "${BASH_REMATCH[1]}"
+			print_statement "${BASH_REMATCH[2]}"
+		fi
+		STATE=$( peek_state )
+	fi
+}
+
+function handle_STMT_BLOCK() {
+	# Current line is a statement block end
+	#
+	if [[ "${1}" =~ $STATEMENT_BLOCK_REGEX ]]; then
+		# End of statement block
+		# Discard saved state
+		#
+		pop_statement_indent >> /dev/null
+		pop_text_indent      >> /dev/null
+		pop_print_indent     >> /dev/null
+		pop_state            >> /dev/null
+		STATE=$( peek_state )
+	# Line is text (assumed to be a statement)
+	#
+	elif [[ "${1}" =~ $TEXT_REGEX ]]; then
+		local statement_indent=$( peek_statement_indent )
+		# Statement is indented
+		#
+		if [[ "${BASH_REMATCH[1]}" ==  "${statement_indent}"* && ${#BASH_REMATCH[1]} -gt ${#statement_indent} ]]; then
+			# Adjust and print
+			#
+			local indent=$( get_statement_block_indent "${BASH_REMATCH[1]}" )
+			print_statement "${indent}${BASH_REMATCH[2]}"
+		# Statement is NOT indented
+		#
+		else
+			# Print leading indentation as-is
+			#
+			print_statement_indent "${BASH_REMATCH[1]}"
+			print_statement "${BASH_REMATCH[2]}"
+		fi
+	fi
+}
+
+lineno=0 # 1 on first use
+while IFS="" read -r LINE || [ -n "${LINE}" ]; do
+	# lineno=$(( $lineno + 1 ))
+	# echo "LINE NO          : ${lineno}"
+	# echo "LINE TEXT        : '${LINE}'"
+	# echo "STATE            : ${STATE}"
+	# echo "STATES           : $( declare -p STATES )"
+	# echo "STATEMENT_INDENTS: $( declare -p STATEMENT_INDENTS )"
+	# echo "TEXT_INDENTS     : $( declare -p TEXT_INDENTS )"
+	# echo "PRINT_INDENTS    : $( declare -p PRINT_INDENTS )"
+	# echo -e ">> ----------------\n"
+	handle_${STATE} "${LINE}"
+	# echo -e "<< ----------------\n\n"
+done < "${1}"
