@@ -148,6 +148,10 @@ STATEMENT_BLOCK_STOP_REGEX="^([[:blank:]]*)${d}\$"
 # printf "#%s\n" "${STATEMENT_BLOCK_STOP_REGEX}"
 
 ds=$( printf '%q' "${STMT_DELIM}" )
+
+COMMENT_REGEX="^([[:blank:]]*)${ds}#"
+# printf "#%s\n" "${COMMENT_REGEX}"
+
 STATEMENT_REGEX="^([[:blank:]]*)${ds}[[:blank:]]+(.*)\$"
 # printf "#%s\n" "${STATEMENT_REGEX}"
 
@@ -479,6 +483,10 @@ function state_DEFAULT() {
 	#
 	elif [[ "${1}" =~ $DIRECTIVE_REGEX ]]; then
 		process_directive "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}"
+	# Line is a comment
+	#
+	elif [[ "${1}" =~ $COMMENT_REGEX ]]; then
+		: # Nothing to do, ignore the line
 	# Line is text
 	# NOTE : Check LAST because *everything* looks like text
 	#
@@ -581,6 +589,28 @@ function state_MAYBE_TXT_BLOCK() {
 			#
 			state_${STATE} "${1}"
 		fi
+	# Line is a comment
+	# NOTE: For MAYBE_TXT_BLOCK, we allow comments to confirm/deny the text block
+	#
+	elif [[ "${1}" =~ $COMMENT_REGEX ]]; then
+		# Comment is indented
+		#
+		if [[ "${BASH_REMATCH[1]}" == "${statement_indent}"* && ${#BASH_REMATCH[1]} -gt ${#statement_indent} ]]; then
+			# Prev statement IS a text block
+			#
+			push_text_indent  "${BASH_REMATCH[1]}"
+			push_print_indent "${statement_indent}"
+			push_state        "TXT_BLOCK"
+		# Comment is NOT indented
+		#
+		else
+			# Prev statement is NOT a text block
+			# Discard saved state
+			#
+			pop_statement_indent >> /dev/null
+			STATE=$( peek_state )
+		fi
+		: # ignore the line
 	# Line is text
 	#
 	elif [[ "${1}" =~ $TEXT_REGEX ]]; then
@@ -670,6 +700,10 @@ function state_TXT_BLOCK() {
 			#
 			process_directive "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}"
 		fi
+	# Line is a comment
+	#
+	elif [[ "${1}" =~ $COMMENT_REGEX ]]; then
+		: # Nothing to do, ignore the line
 	# Line is text
 	#
 	elif [[ "${1}" =~ $TEXT_REGEX ]]; then
