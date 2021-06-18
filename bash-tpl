@@ -384,23 +384,30 @@ function process_tags() {
 	local line="${1}"
 	local args=""
 	while [ -n "${line}" ]; do
+		# echo "LINE @ START: $( declare -p line )" >&2
 		if [[ "${line}" =~ $TAG_TEXT_REGEX ]]; then
-			args="${args}'${BASH_REMATCH[1]}'"
+			# echo "TEXT TAG MATCH: $( declare -p BASH_REMATCH )" >&2
+			local quoted=$( printf "%q" "${BASH_REMATCH[1]}" )
+			args="${args}${quoted}"
 			line="${BASH_REMATCH[5]}"
 		elif [[ "${line}" =~ $TAG_QUOTE_REGEX ]]; then
+			# echo "QUOTE TAG MATCH: $( declare -p BASH_REMATCH )" >&2
 			args="${args}\"${BASH_REMATCH[1]}\""
-			line="${BASH_REMATCH[5]}"
+			line="${BASH_REMATCH[6]}"
 		elif [[ "${line}" =~ $TAG_STATEMENT_REGEX ]]; then
+			# echo "STMT TAG MATCH: $( declare -p BASH_REMATCH )" >&2
 			trim BASH_REMATCH[1]
 			args="${args}\"\$(${BASH_REMATCH[1]})\""
-			line="${BASH_REMATCH[5]}"
+			line="${BASH_REMATCH[6]}"
 		# Check delim regex last as its a super-set of quote and stmt regex
 		#
 		elif [[ "${line}" =~ $TAG_DELIM_REGEX ]]; then
+			# echo "DELIM TAG MATCH: $( declare -p BASH_REMATCH )" >&2
 			trim BASH_REMATCH[1]
 			args="${args}\"${BASH_REMATCH[1]}\""
 			line="${BASH_REMATCH[5]}"
 		fi
+		# echo "LINE @ END: $( declare -p line )" >&2
 	done
 	if [ -n "${args}" ]; then
 		printf "printf \"%%s\\\\n\" %s\n" "${args}"
