@@ -144,7 +144,7 @@ ARGS:
   %# indentations within the while statement are removed.
   % while (( "$#" )); do
       %# Indentation is even tracked across includes
-      %INCLUDE include.tpl
+      .INCLUDE include.tpl
       % shift
   % done
 ```
@@ -162,4 +162,58 @@ ARGS:
   - b
   - c
   - d
+```
+
+#### DELIMS
+_test.tpl_
+```
+%# We change the stmt block and tag delims
+%# NOTE: Both the '=' and double-quotes (") are required
+.DELIMS stmt-block="<% %>" tag="{{ }}"
+<%
+    if [ -z "${1}" ]; then
+        echo "Error: Missing argument" >&2
+        return
+    fi
+%>
+Hello {{ $1 }}
+```
+
+_test with argument_
+```sh
+$ source <( bash-tpl test.tpl ) TekWizely
+
+Hello TekWizely
+```
+
+##### Params
+
+| PARAM            | FORMAT    | NOTE |
+|------------------|-----------|------|
+| TAG              | `".. .."` | 2 2-char sequences, separated by a **single** space
+| TAG-STMT         | `"."`     | 1 single character
+| STMT             | `".+"`    | 1 or more characters
+| STMT-BLOCK       | `".+ .+"` | two 1-or-more char sequences, separated by a **single** space
+| DIR \| DIRECTIVE | `".+"`    | 1 or more characters
+| CMT \| COMMENT   | `".+"`    | 1 or more characters
+
+**NOTE** Both the `=` and Double-Quotes (`"`) shown in the example script are **required**.
+
+#### RESET-DELIMS
+
+_test.tpl_
+```
+% echo "default statement delim"
+.DELIMS stmt="$>"
+$> echo "modified statement delim"
+.RESET-DELIMS
+% echo "back to default statement delim"
+```
+
+```sh
+$ source <( bash-tpl test.tpl )
+
+default statement delim
+modified statement delim
+back to default statement delim
 ```
