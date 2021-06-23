@@ -8,7 +8,216 @@
 #######################################################################
 
 #######################################################################
-# Arg Driven Values
+# Delim Functions - Need to be defined before Init
+#######################################################################
+
+##
+# reset_delims
+#
+function reset_delims() {
+	TAG_START_DELIM1='<'
+	TAG_START_DELIM2='%'
+	TAG_STOP_DELIM1='%'
+	TAG_STOP_DELIM2='>'
+
+	TAG_STMT_DELIM='%'
+
+	STMT_DELIM='%'
+
+	STMT_BLOCK_DELIM_UNDEFINED=1
+	STMT_BLOCK_START_DELIM=''
+	STMT_BLOCK_STOP_DELIM=''
+
+	DIRECTIVE_DELIM='.'
+
+	COMMENT_DELIM_UNDEFINED=1
+	COMMENT_DELIM=''
+}
+
+##
+# parse_tag_delims
+# $1 = delims
+# $2 = src (for error msg)
+#
+function parse_tag_delims() {
+	if [[ "${1}" =~ $TAG_DELIM_REGEX ]]; then
+		TAG_START_DELIM1="${BASH_REMATCH[1]}"
+		TAG_START_DELIM2="${BASH_REMATCH[2]}"
+		TAG_STOP_DELIM1="${BASH_REMATCH[3]}"
+		TAG_STOP_DELIM2="${BASH_REMATCH[4]}"
+	else
+		echo "Error: Invalid or missing tag delimeter values for ${2-tag delims}: '${1}'" >&2
+		exit 1
+	fi
+}
+
+##
+# parse_tag_stmt_delims
+# $1 = delim
+# $2 = src (for error msg)
+#
+function parse_tag_stmt_delim() {
+	if [[ "${1}" =~ $TAG_STMT_DELIM_REGEX ]]; then
+		TAG_STMT_DELIM="${1}"
+	else
+		echo "Error: Invalid or missing tag stmt delimeter values for ${2-tag stmt delim}: '${1}'" >&2
+		exit 1
+	fi
+}
+
+##
+# parse_stmt_delim
+# $1 = delim
+# $2 = src (for error msg)
+#
+function parse_stmt_delim() {
+	if [[ "${1}" =~ $STMT_DELIM_REGEX ]]; then
+		STMT_DELIM="${1}"
+	else
+		echo "Error: Invalid or missing stmt delimeter value for ${2:-stmt delim}: '${1}'" >&2
+		exit 1
+	fi
+}
+
+##
+# parse_stmt_block_delims
+# $1 = delims
+# $2 = src (for error msg)
+#
+function parse_stmt_block_delims() {
+	if [[ "${1}" =~ $STMT_BLOCK_DELIM_REGEX ]]; then
+		STMT_BLOCK_START_DELIM="${BASH_REMATCH[1]}"
+		STMT_BLOCK_STOP_DELIM="${BASH_REMATCH[2]}"
+		STMT_BLOCK_DELIM_UNDEFINED=''
+	else
+		echo "Error: Invalid or missing stmt-block delimeter values for ${2:-stmt-block delims}: '${1}'" >&2
+		exit 1
+	fi
+}
+
+##
+# parse_directive_delim - Uses STMT delim regex
+# $1 = delim
+# $2 = src (for error msg)
+#
+function parse_directive_delim() {
+	if [[ "${1}" =~ $STMT_DELIM_REGEX ]]; then
+		DIRECTIVE_DELIM="${1}"
+	else
+		echo "Error: Invalid or missing directive delimeter value for ${2:-dir delim}: '${1}'" >&2
+		exit 1
+	fi
+}
+
+##
+# parse_comment_delim - Uses STMT delim regex
+# $1 = delim
+# $2 = src (for error msg)
+#
+function parse_comment_delim() {
+	if [[ "${1}" =~ $STMT_DELIM_REGEX ]]; then
+		COMMENT_DELIM="${1}"
+		COMMENT_DELIM_UNDEFINED=''
+	else
+		echo "Error: Invalid or missing comment delimeter value for ${2:-cmt delim}: '${1}'" >&2
+		exit 1
+	fi
+}
+
+##
+# reset_delim_regexes
+#
+function reset_delim_regexes() {
+	# Fixup STMT_BLOCK delims - Default to STMT_DELIM if not set
+	#
+	if [[ -n "${STMT_BLOCK_DELIM_UNDEFINED}" ]]; then
+		STMT_BLOCK_START_DELIM="${STMT_DELIM}"
+		STMT_BLOCK_STOP_DELIM="${STMT_DELIM}"
+	fi
+
+	# Fixup COMMENT delim - Default to STMT_DELIM followed by '#' if not set
+	#
+	if [[ -n "${COMMENT_DELIM_UNDEFINED}" ]]; then
+		COMMENT_DELIM="${STMT_DELIM}#"
+	fi
+
+	#
+	# Create regexes
+	#
+
+	local d ds d1 d2 d3 d4
+
+	d=$( regex_quote "${STMT_BLOCK_START_DELIM}" )
+	STATEMENT_BLOCK_START_REGEX="^([[:blank:]]*)${d}[[:blank:]]*\$"
+
+	d=$( regex_quote "${STMT_BLOCK_STOP_DELIM}" )
+	STATEMENT_BLOCK_STOP_REGEX="^([[:blank:]]*)${d}[[:blank:]]*\$"
+
+	d=$( regex_quote "${COMMENT_DELIM}" )
+	COMMENT_REGEX="^([[:blank:]]*)${d}"
+
+	d=$( regex_quote "${DIRECTIVE_DELIM}" )
+	DIRECTIVE_REGEX="^([[:blank:]]*)${d}([a-zA-Z_-]+)(.*)\$"
+
+	d=$( regex_quote "${STMT_DELIM}" )
+	STATEMENT_REGEX="^([[:blank:]]*)${d}[[:blank:]]+(.+)\$"
+
+	TEXT_REGEX='^([[:blank:]]*)([^[:blank:]](.*))?$'
+
+	d1=$( regex_quote "${TAG_START_DELIM1}" )
+	d2=$( regex_quote "${TAG_START_DELIM2}" )
+	d3=$( regex_quote "${TAG_STOP_DELIM1}"  )
+	d4=$( regex_quote "${TAG_STOP_DELIM2}"  )
+	ds=$( regex_quote "${TAG_STMT_DELIM}"   )
+
+	TAG_TEXT_REGEX="^((([^${d1}])|(${d1}[^${d2}]))+)(.*)"
+
+	TAG_QUOTE_REGEX="^${d1}${d2}\"((([^\"])|(\"[^${d3}])|(\"${d3}[^${d4}]))*)\"${d3}${d4}(.*)"
+
+	TAG_STATEMENT_REGEX="^${d1}${d2}${ds}((([^${d3}])|(${d3}[^${d4}]))*)${d3}${d4}(.*)"
+
+	TAG_STD_REGEX="^${d1}${d2}((([^${d3}])|(${d3}[^${d4}]))*)${d3}${d4}(.*)"
+
+	# echo "---> delim regexes:"
+	# printf "# STATEMENT_BLOCK_START_REGEX: '%s'\n" "${STATEMENT_BLOCK_START_REGEX}"
+	# printf "# STATEMENT_BLOCK_STOP_REGEX: '%s'\n" "${STATEMENT_BLOCK_STOP_REGEX}"
+	# printf "# COMMENT_REGEX: '%s'\n" "${COMMENT_REGEX}"
+	# printf "# DIRECTIVE_REGEX: '%s'\n" "${DIRECTIVE_REGEX}"
+	# printf "# STATEMENT_REGEX: '%s'\n" "${STATEMENT_REGEX}"
+	# printf "# TAG_TEXT_REGEX: '%s'\n" "${TAG_TEXT_REGEX}"
+	# printf "# TAG_QUOTE_REGEX: '%s'\n" "${TAG_QUOTE_REGEX}"
+	# printf "# TAG_STATEMENT_REGEX: '%s'\n" "${TAG_STATEMENT_REGEX}"
+	# printf "# TAG_STD_REGEX: '%s'\n" "${TAG_STD_REGEX}"
+}
+
+#######################################################################
+# Misc Functions - Need to be defined before Init
+#######################################################################
+
+##
+# trim
+# usage: trim varname
+#
+function trim() {
+	read -rd '' $1 <<<"${!1}"
+}
+
+##
+# regex_quote
+#
+function regex_quote() {
+	sed 's/[][\.|$()?+*^]/\\&/g' <<< "$*" # Omits: {}
+}
+
+##
+# normalize_directive
+#
+function normalize_directive() {
+	tr '[a-z_]' '[A-Z-]'  <<< "$*"
+}
+
+#######################################################################
+# Init
 #######################################################################
 
 OUPUT_FILE=""
@@ -16,83 +225,73 @@ OUPUT_FILE=""
 BASE_STMT_INDENT=""
 BASE_TEXT_INDENT=""
 
-STMT_DELIM_REGEX='^[^[:blank:]]+$'
-STMT_DELIM='%'
-if [ -n "${BASH_TPL_STMT_DELIM}" ]; then
-	if [[ "${BASH_TPL_STMT_DELIM}" =~ $STMT_DELIM_REGEX ]]; then
-		STMT_DELIM="${BASH_TPL_STMT_DELIM}"
-	else
-		echo "Warning: Invalid value for BASH_TPL_STMT_DELIM: '${BASH_TPL_STMT_DELIM}'" >&2
-	fi
-fi
-
-STMT_BLOCK_DELIM_REGEX='^([^[:blank:]]+) ([^[:blank:]]+)$'
-# Will be set to match STMT_DELIM if not explicily configured
-#
-STMT_BLOCK_START_DELIM=''
-STMT_BLOCK_STOP_DELIM=''
-if [ -n "${BASH_TPL_STMT_BLOCK_DELIMS}" ]; then
-	if [[ "${BASH_TPL_STMT_BLOCK_DELIMS}" =~ $STMT_BLOCK_DELIM_REGEX ]]; then
-		STMT_BLOCK_START_DELIM="${BASH_REMATCH[1]}"
-		STMT_BLOCK_STOP_DELIM="${BASH_REMATCH[2]}"
-	else
-		echo "Warning: Invalid value for BASH_TPL_STMT_BLOCK_DELIMS: '${BASH_TPL_STMT_BLOCK_DELIMS}'" >&2
-	fi
-fi
-
 TAG_DELIM_REGEX='^([^[:blank:]])([^[:blank:]]) ([^[:blank:]])([^[:blank:]])$'
-TAG_START_DELIM1='<'
-TAG_START_DELIM2='%'
-TAG_STOP_DELIM1='%'
-TAG_STOP_DELIM2='>'
+TAG_STMT_DELIM_REGEX='^[^[:blank:]]$'
+STMT_DELIM_REGEX='^[^[:blank:]]+$'
+STMT_BLOCK_DELIM_REGEX='^([^[:blank:]]+) ([^[:blank:]]+)$'
+
+#
+# Set Delims from Environment Vars
+#
+
+# Start with default delims
+#
+reset_delims
+
 if [ -n "${BASH_TPL_TAG_DELIMS}" ]; then
-	if [[ "${BASH_TPL_TAG_DELIMS}" =~ $TAG_DELIM_REGEX ]]; then
-		TAG_START_DELIM1="${BASH_REMATCH[1]}"
-		TAG_START_DELIM2="${BASH_REMATCH[2]}"
-		TAG_STOP_DELIM1="${BASH_REMATCH[3]}"
-		TAG_STOP_DELIM2="${BASH_REMATCH[4]}"
-	else
-		echo "Warning: Invalid value for BASH_TPL_TAG_DELIMS: '${BASH_TPL_TAG_DELIMS}'" >&2
-	fi
+	parse_tag_delims "${BASH_TPL_TAG_DELIMS}" "BASH_TPL_TAG_DELIMS"
+fi
+
+if [ -n "${BASH_TPL_TAG_STMT_DELIM}" ]; then
+	parse_tag_stmt_delim "${BASH_TPL_TAG_STMT_DELIM}" "BASH_TPL_TAG_STMT_DELIM"
+fi
+
+if [ -n "${BASH_TPL_STMT_DELIM}" ]; then
+	parse_stmt_delim "${BASH_TPL_STMT_DELIM}" "BASH_TPL_STMT_DELIM"
+fi
+
+if [ -n "${BASH_TPL_STMT_BLOCK_DELIMS}" ]; then
+	parse_stmt_block_delims "${BASH_TPL_STMT_BLOCK_DELIMS}" "BASH_TPL_STMT_BLOCK_DELIMS"
+fi
+
+if [ -n "${BASH_TPL_DIR_DELIM}" ]; then
+	parse_directive_delim "${BASH_TPL_DIR_DELIM}" "BASH_TPL_DIR_DELIM"
+fi
+
+if [ -n "${BASH_TPL_CMT_DELIM}" ]; then
+	parse_comment_delim "${BASH_TPL_CMT_DELIM}" "BASH_TPL_CMT_DELIM"
 fi
 
 #
-# Arg Check - Bail early if invalid
+# Check args - Bail early if invalid
 #
 
 args=()
 while (( "$#" )); do
 	case "$1" in
+		--tag-delims)
+			parse_tag_delims "$2" "$1"
+			shift 2
+			;;
+		--tag-stmt-delim)
+			parse_tag_stmt_delim "$2" "$1"
+			shift 2
+			;;
 		--stmt-delim)
-			if [[ ${2} =~ $STMT_DELIM_REGEX ]]; then
-				STMT_DELIM="${2}"
-				shift 2
-			else
-				echo "Error: Invalid or missing value for --stmt-delim: '${2}'" >&2
-				exit 1
-			fi
+			parse_stmt_delim "$2" "$1"
+			shift 2
 			;;
 		--stmt-block-delims)
-			if [[ ${2} =~ $STMT_BLOCK_DELIM_REGEX ]]; then
-				STMT_BLOCK_START_DELIM="${BASH_REMATCH[1]}"
-				STMT_BLOCK_STOP_DELIM="${BASH_REMATCH[2]}"
-				shift 2
-			else
-				echo "Error: Invalid or missing value for --stmt-block-delims: '${2}'" >&2
-				exit 1
-			fi
+			parse_stmt_block_delims "$2" "$1"
+			shift 2
 			;;
-		--tag-delims)
-			if [[ ${2} =~ $TAG_DELIM_REGEX ]]; then
-				TAG_START_DELIM1="${BASH_REMATCH[1]}"
-				TAG_START_DELIM2="${BASH_REMATCH[2]}"
-				TAG_STOP_DELIM1="${BASH_REMATCH[3]}"
-				TAG_STOP_DELIM2="${BASH_REMATCH[4]}"
-				shift 2
-			else
-				echo "Error: Invalid or missing value for --tag-delims: '${2}'" >&2
-				exit 1
-			fi
+		--dir-delim|--directive-delim)
+			parse_directive_delim "$2" "$1"
+			shift 2
+			;;
+		--cmt-delim|--comment-delim)
+			parse_comment_delim "$2" "$1"
+			shift 2
 			;;
 		-o|--output-file)
 			if [ -n "${2}" ]; then
@@ -123,72 +322,14 @@ while (( "$#" )); do
 done
 set -- "${args[@]}"
 
-# Fixup STMT_BLOCK delims - Default to STMT_DELIM if not set
-#
-if [[ -z "${STMT_BLOCK_START_DELIM}" || -z "${STMT_BLOCK_STOP_DELIM}" ]]; then
-	STMT_BLOCK_START_DELIM="${STMT_DELIM}"
-	STMT_BLOCK_STOP_DELIM="${STMT_DELIM}"
-fi
-
 if [[ -z "${1}" || ! -r "${1}" ]]; then
 	echo "File not found: '${1}'" >&2
 	exit 1
 fi
 
-#######################################################################
-# REGEX
-#######################################################################
-
-d=$( printf '%q' "${STMT_BLOCK_START_DELIM}" )
-STATEMENT_BLOCK_START_REGEX="^([[:blank:]]*)${d}\$"
-# printf "#%s\n" "${STATEMENT_BLOCK_START_REGEX}"
-
-d=$( printf '%q' "${STMT_BLOCK_STOP_DELIM}" )
-STATEMENT_BLOCK_STOP_REGEX="^([[:blank:]]*)${d}\$"
-# printf "#%s\n" "${STATEMENT_BLOCK_STOP_REGEX}"
-
-ds=$( printf '%q' "${STMT_DELIM}" )
-
-COMMENT_REGEX="^([[:blank:]]*)${ds}#"
-# printf "#%s\n" "${COMMENT_REGEX}"
-
-STATEMENT_REGEX="^([[:blank:]]*)${ds}[[:blank:]]+(.*)\$"
-# printf "#%s\n" "${STATEMENT_REGEX}"
-
-DIRECTIVE_REGEX="^([[:blank:]]*)${ds}([A-Z_]+)(.*)\$"
-# printf "#%s\n" "${DIRECTIVE_REGEX}"
-
-TEXT_REGEX='^([[:blank:]]*)([^[:blank:]](.*))?$'
-
-d1=$( printf '%q' "${TAG_START_DELIM1}" )
-d2=$( printf '%q' "${TAG_START_DELIM2}" )
-d3=$( printf '%q' "${TAG_STOP_DELIM1}"  )
-d4=$( printf '%q' "${TAG_STOP_DELIM2}"  )
-TAG_TEXT_REGEX="^((([^${d1}])|(${d1}[^${d2}]))+)(.*)"
-# printf "#%s\n" "${TAG_TEXT_REGEX}"
-
-TAG_QUOTE_REGEX="^${d1}${d2}\"((([^\"])|(\"[^${d3}])|(\"${d3}[^${d4}]))*)\"${d3}${d4}(.*)"
-# printf "#%s\n" "${TAG_QUOTE_REGEX}"
-
-TAG_STATEMENT_REGEX="^${d1}${d2}${ds}((([^%])|(%[^${d3}])|(%${d3}[^${d4}]))*)${d3}${d4}(.*)"
-# printf "#%s\n" "${TAG_STATEMENT_REGEX}"
-
-TAG_DELIM_REGEX="^${d1}${d2}((([^${d3}])|(${d3}[^${d4}]))*)${d3}${d4}(.*)"
-# printf "#%s\n" "${TAG_DELIM_REGEX}"
-
-unset d ds d1 d2 d3 d4
-
-#######################################################################
-# Misc Functions
-#######################################################################
-
-##
-# trim
-# usage: trim varname
+# Generate delim regexes
 #
-function trim() {
-	read -rd '' $1 <<<"${!1}"
-}
+reset_delim_regexes
 
 #######################################################################
 # STATES
@@ -388,30 +529,37 @@ function process_tags() {
 	local line="${1}"
 	local args=""
 	while [ -n "${line}" ]; do
-		# echo "LINE @ START: $( declare -p line )" >&2
+		# echo "# LINE @ START: $( declare -p line )" >&2
 		if [[ "${line}" =~ $TAG_TEXT_REGEX ]]; then
-			# echo "TEXT TAG MATCH: $( declare -p BASH_REMATCH )" >&2
+			# echo "# TEXT TAG MATCH: $( declare -p BASH_REMATCH )" >&2
 			local quoted=$( printf "%q" "${BASH_REMATCH[1]}" )
 			args="${args}${quoted}"
 			line="${BASH_REMATCH[5]}"
 		elif [[ "${line}" =~ $TAG_QUOTE_REGEX ]]; then
-			# echo "QUOTE TAG MATCH: $( declare -p BASH_REMATCH )" >&2
+			# echo "# QUOTE TAG MATCH: $( declare -p BASH_REMATCH )" >&2
 			args="${args}\"${BASH_REMATCH[1]}\""
 			line="${BASH_REMATCH[6]}"
 		elif [[ "${line}" =~ $TAG_STATEMENT_REGEX ]]; then
-			# echo "STMT TAG MATCH: $( declare -p BASH_REMATCH )" >&2
+			# echo "# STMT TAG MATCH: $( declare -p BASH_REMATCH )" >&2
 			trim BASH_REMATCH[1]
 			args="${args}\"\$(${BASH_REMATCH[1]})\""
-			line="${BASH_REMATCH[6]}"
-		# Check delim regex last as its a super-set of quote and stmt regex
+			line="${BASH_REMATCH[5]}"
+		# Check standard regex last as its a super-set of quote and stmt regex
 		#
-		elif [[ "${line}" =~ $TAG_DELIM_REGEX ]]; then
-			# echo "DELIM TAG MATCH: $( declare -p BASH_REMATCH )" >&2
+		elif [[ "${line}" =~ $TAG_STD_REGEX ]]; then
+			# echo "# STD TAG MATCH: $( declare -p BASH_REMATCH )" >&2
 			trim BASH_REMATCH[1]
 			args="${args}\"${BASH_REMATCH[1]}\""
 			line="${BASH_REMATCH[5]}"
+		# Assume rest of line is TEXT
+		#
+		else
+			# echo "# DEFAULT: Assuming TEXT: $( declare -p line )"
+			local quoted=$( printf "%q" "${line}" )
+			args="${args}${quoted}"
+			line=""
 		fi
-		# echo "LINE @ END: $( declare -p line )" >&2
+		# echo "# LINE @ END: $( declare -p line )" >&2
 	done
 	if [ -n "${args}" ]; then
 		printf "printf \"%%s\\\\n\" %s\n" "${args}"
@@ -420,23 +568,81 @@ function process_tags() {
 	fi
 }
 
+DELIM_DIR_TAG_REGEX='[Tt][Aa][Gg]\s*=\s*"([^"]*)"'
+DELIM_DIR_TAG_STMT_REGEX='[Tt][Aa][Gg][_-]?[Ss][Tt][Mm][Tt]\s*=\s*"([^"]*)"'
+DELIM_DIR_STMT_REGEX='[Ss][Tt][Mm][Tt]\s*=\s*"([^"]*)"'
+DELIM_DIR_STMT_BLOCK_REGEX='[Ss][Tt][Mm][Tt][_-]?[Bb][Ll][Oo][Cc][Kk]\s*=\s*"([^"]*)"'
+DELIM_DIR_DIR_REGEX='[Dd][Ii][Rr]\s*=\s*"([^"]*)"'
+DELIM_DIR_DIRECTIVE_REGEX='[Dd][Ii][Rr][Ee][Cc][Tt][Ii][Vv][Ee]\s*=\s*"([^"]*)"'
+DELIM_DIR_CMT_REGEX='[Cc][Mm][Tt]\s*=\s*"([^"]*)"'
+DELIM_DIR_COMMENT_REGEX='[Cc][Oo][Mm][Mm][Ee][Nn][Tt]\s*=\s*"([^"]*)"'
+
 ##
 # process_directive
 # $1 = leading_indent
 # $2 = directive
-# $3 - directive arg(s)
+# $3 = directive arg(s)
 #
 function process_directive() {
-		case "${2}" in
+		local directive=$( normalize_directive "${2}" )
+		case "${directive}" in
 			INCLUDE)
 				local stmt_indent="${1}"
 				local text_indent=$( get_text_indent "${1}" )
 				local tpl="${3}"
 				trim tpl
-				"${BASH_SOURCE[0]}" --stmt-indent "${stmt_indent}" --text-indent "${text_indent}" "${tpl}"
+				"${BASH_SOURCE[0]}" \
+					--stmt-indent       "${stmt_indent}" \
+					--text-indent       "${text_indent}" \
+					--tag-delims        "${TAG_START_DELIM1}${TAG_START_DELIM2} ${TAG_STOP_DELIM1}${TAG_STOP_DELIM1}" \
+					--tag-stmt-delim    "${TAG_STMT_DELIM}" \
+					--stmt-delim        "${STMT_DELIM}"     \
+					--stmt-block-delims "${STMT_BLOCK_START_DELIM} ${STMT_BLOCK_STOP_DELIM}" \
+					--dir-delim         "${DIRECTIVE_DELIM}" \
+					--cmt-delim         "${COMMENT_DELIM}"   \
+					"${tpl}"
+				;;
+			DELIMS)
+				# TAG
+				#
+				if [[ "${3}" =~ $DELIM_DIR_TAG_REGEX ]]; then
+					parse_tag_delims "${BASH_REMATCH[1]}" 'DELIMS TAG directive'
+				fi
+				# TAG-STMT
+				#
+				if [[ "${3}" =~ $DELIM_DIR_TAG_STMT_REGEX ]]; then
+					parse_tag_stmt_delim "${BASH_REMATCH[1]}" 'DELIMS TAG-STMT directive'
+				fi
+				# STMT
+				#
+				if [[ "${3}" =~ $DELIM_DIR_STMT_REGEX ]]; then
+					parse_stmt_delim "${BASH_REMATCH[1]}" 'DELIMS STMT directive'
+				fi
+				# STMT-BLOCK
+				#
+				if [[ "${3}" =~ $DELIM_DIR_STMT_BLOCK_REGEX ]]; then
+					parse_stmt_block_delims "${BASH_REMATCH[1]}" '"DELIMS STMT-BLOCK directive'
+				fi
+				# DIRECTIVE
+				#
+				if [[ "${3}" =~ $DELIM_DIR_DIR_REGEX || "${3}" =~ $DELIM_DIR_DIRECTIVE_REGEX ]]; then
+					parse_directive_delim "${BASH_REMATCH[1]}" 'DELIMS DIR directive'
+				fi
+				# COMMENT
+				#
+				if [[ "${3}" =~ $DELIM_DIR_CMT_REGEX || "${3}" =~ $DELIM_DIR_DIR_REGEX ]]; then
+					parse_comment_delim "${BASH_REMATCH[1]}" 'DELIMS CMT directive'
+				fi
+				# Reset regexes
+				#
+				reset_delim_regexes
+				;;
+			RESET-DELIMS)
+				reset_delims
+				reset_delim_regexes
 				;;
 			*) # unsupported directive
-				echo "Error: Unknown directive: '${2}' - Skipping" >&2
+				echo "Error: Unknown directive: '${directive}' - Skipping" >&2
 				;;
 		esac
 }
