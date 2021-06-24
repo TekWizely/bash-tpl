@@ -630,7 +630,7 @@ function process_directive() {
 				fi
 				# COMMENT
 				#
-				if [[ "${3}" =~ $DELIM_DIR_CMT_REGEX || "${3}" =~ $DELIM_DIR_DIR_REGEX ]]; then
+				if [[ "${3}" =~ $DELIM_DIR_CMT_REGEX || "${3}" =~ $DELIM_DIR_COMMENT_REGEX ]]; then
 					parse_comment_delim "${BASH_REMATCH[1]}" 'DELIMS CMT directive'
 				fi
 				# Reset regexes
