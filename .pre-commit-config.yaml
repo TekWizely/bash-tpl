@@ -1,0 +1,52 @@
+repos:
+  # Standard hooks
+  #
+  - repo: git://github.com/pre-commit/pre-commit-hooks
+    rev: v2.3.0
+    hooks:
+      -   id: check-merge-conflict
+      # -   id: check-yaml
+      -   id: end-of-file-fixer
+      -   id: trailing-whitespace
+  # Bash helper hooks (local)
+  #
+  - repo: local
+    hooks:
+      # shellcheck (aliased to shck)
+      #
+      - id: shellcheck
+        name: Run static analysis on bash-tpl (shellcheck)
+        entry: shellcheck
+        language: system
+        files: "^bash-tpl$"
+        types: [file]
+        alias: shck
+      # shfmt
+      #
+      - id: shfmt
+        name: Run lint check on bash-tpl (shfmt -d)
+        entry: shfmt
+        language: system
+        files: "^bash-tpl$"
+        types: [file]
+        args: [ '-i', '0', '-ci', '-sr', '-kp', '-d' ]
+      # shfmt -w (must manually invoke)
+      #
+      - id: shfmtw
+        name: Auto-fix lint errors on bash-tpl (shfmt -w)
+        entry: shfmt
+        language: system
+        stages: [manual]
+        files: "^bash-tpl$"
+        types: [file]
+        args: [ '-i', '0', '-ci', '-sr', '-kp', '-w' ]
+      # bats full test suite
+      #
+      - id: bats
+        name: Run full test suite (bats)
+        entry: bats
+        language: system
+        stages: [commit]
+        alias: test
+        pass_filenames: false
+        args: [ test ]

@@ -509,7 +509,7 @@ setup() {
 	parse_tag_delims "{{ }}"
 	reset_template_regexes
 
-	[[ ! ""   =~ $TAG_TEXT_REGEX ]]
+	[[ ! ""    =~ $TAG_TEXT_REGEX ]]
 	[[ ! "{{"  =~ $TAG_TEXT_REGEX ]]
 }
 
@@ -649,18 +649,18 @@ setup() {
 	reset_delims
 	reset_template_regexes
 
-	[[ "<%%>"      =~ $TAG_STD_REGEX ]]
-	[[ "<% %>"     =~ $TAG_STD_REGEX ]]
-	[[ "<%  %>"    =~ $TAG_STD_REGEX ]]
-	[[ "<%tag%>"   =~ $TAG_STD_REGEX ]]
-	[[ "<% tag%>"  =~ $TAG_STD_REGEX ]]
-	[[ "<%tag %>"  =~ $TAG_STD_REGEX ]]
-	[[ "<% tag %>" =~ $TAG_STD_REGEX ]]
-	[[ "<%%%>"     =~ $TAG_STD_REGEX ]]
-	[[ "<% %%>"    =~ $TAG_STD_REGEX ]]
-	[[ "<%% %>"    =~ $TAG_STD_REGEX ]]
-	[[ "<% % %>"   =~ $TAG_STD_REGEX ]]
-	[[ "<%%%%>"    =~ $TAG_STD_REGEX ]]
+	[[ "<%%>"        =~ $TAG_STD_REGEX ]]
+	[[ "<% %>"       =~ $TAG_STD_REGEX ]]
+	[[ "<%  %>"      =~ $TAG_STD_REGEX ]]
+	[[ "<%tag%>"     =~ $TAG_STD_REGEX ]]
+	[[ "<% tag%>"    =~ $TAG_STD_REGEX ]]
+	[[ "<%tag %>"    =~ $TAG_STD_REGEX ]]
+	[[ "<% tag %>"   =~ $TAG_STD_REGEX ]]
+	[[ "<%%%>"       =~ $TAG_STD_REGEX ]]
+	[[ "<% %%>"      =~ $TAG_STD_REGEX ]]
+	[[ "<%% %>"      =~ $TAG_STD_REGEX ]]
+	[[ "<% % %>"     =~ $TAG_STD_REGEX ]]
+	[[ "<%%%%>"      =~ $TAG_STD_REGEX ]]
 	[[ '<% $HOME %>' =~ $TAG_STD_REGEX ]]
 
 	#
@@ -670,18 +670,18 @@ setup() {
 	parse_tag_delims "{{ }}"
 	reset_template_regexes
 
-	[[ "{{}}"        =~ $TAG_STD_REGEX ]]
-	[[ "{{ }}"       =~ $TAG_STD_REGEX ]]
-	[[ "{{  }}"      =~ $TAG_STD_REGEX ]]
-	[[ "{{tag}}"     =~ $TAG_STD_REGEX ]]
-	[[ "{{ tag}}"    =~ $TAG_STD_REGEX ]]
-	[[ "{{tag }}"    =~ $TAG_STD_REGEX ]]
-	[[ "{{ tag }}>"  =~ $TAG_STD_REGEX ]]
-	[[ "{{}}}"       =~ $TAG_STD_REGEX ]]
-	[[ "{{ }}}"      =~ $TAG_STD_REGEX ]]
-	[[ "{{} }}"      =~ $TAG_STD_REGEX ]]
-	[[ "{{ } }}"     =~ $TAG_STD_REGEX ]]
-	[[ "{{}}}}}"     =~ $TAG_STD_REGEX ]]
+	[[ "{{}}"       =~ $TAG_STD_REGEX ]]
+	[[ "{{ }}"      =~ $TAG_STD_REGEX ]]
+	[[ "{{  }}"     =~ $TAG_STD_REGEX ]]
+	[[ "{{tag}}"    =~ $TAG_STD_REGEX ]]
+	[[ "{{ tag}}"   =~ $TAG_STD_REGEX ]]
+	[[ "{{tag }}"   =~ $TAG_STD_REGEX ]]
+	[[ "{{ tag }}>" =~ $TAG_STD_REGEX ]]
+	[[ "{{}}}"      =~ $TAG_STD_REGEX ]]
+	[[ "{{ }}}"     =~ $TAG_STD_REGEX ]]
+	[[ "{{} }}"     =~ $TAG_STD_REGEX ]]
+	[[ "{{ } }}"    =~ $TAG_STD_REGEX ]]
+	[[ "{{}}}}}"    =~ $TAG_STD_REGEX ]]
 }
 
 @test "TAG_QUOTE_REGEX: should fail on invalid quote script tag" {
@@ -698,7 +698,7 @@ setup() {
 	[[ ! "<>"        =~ $TAG_QUOTE_REGEX ]]
 	[[ ! "<%"        =~ $TAG_QUOTE_REGEX ]]
 	[[ ! "<%>"       =~ $TAG_QUOTE_REGEX ]]
-	[[ ! "<% %>"    =~ $TAG_QUOTE_REGEX ]]
+	[[ ! "<% %>"     =~ $TAG_QUOTE_REGEX ]]
 	[[ ! "<% tag %>" =~ $TAG_QUOTE_REGEX ]]
 	[[ ! '<%"%>'     =~ $TAG_QUOTE_REGEX ]]
 	[[ ! '<%" " %>'  =~ $TAG_QUOTE_REGEX ]]
@@ -715,7 +715,7 @@ setup() {
 	[[ ! "{{"        =~ $TAG_QUOTE_REGEX ]]
 	[[ ! "{{}"       =~ $TAG_QUOTE_REGEX ]]
 	[[ ! "{}}"       =~ $TAG_QUOTE_REGEX ]]
-	[[ ! "{{ }}"    =~ $TAG_QUOTE_REGEX ]]
+	[[ ! "{{ }}"     =~ $TAG_QUOTE_REGEX ]]
 	[[ ! "{{ tag }}" =~ $TAG_QUOTE_REGEX ]]
 	[[ ! '{{"}}'     =~ $TAG_QUOTE_REGEX ]]
 	[[ ! '{{" " }}'  =~ $TAG_QUOTE_REGEX ]]
@@ -730,7 +730,8 @@ setup() {
 	reset_template_regexes
 
 	[[ '<%""%>'      =~ $TAG_QUOTE_REGEX ]]
-	[[ '<%""%>'     =~ $TAG_QUOTE_REGEX ]]
+
+	[[ '<%""%>'      =~ $TAG_QUOTE_REGEX ]]
 	[[ '<%"  "%>'    =~ $TAG_QUOTE_REGEX ]]
 	[[ '<%"tag"%>'   =~ $TAG_QUOTE_REGEX ]]
 	[[ '<%" tag"%>'  =~ $TAG_QUOTE_REGEX ]]
@@ -771,11 +772,11 @@ setup() {
 	reset_delims
 	reset_template_regexes
 
-	[[ ! ""         =~ $TAG_STATEMENT_REGEX ]]
-	[[ ! " "        =~ $TAG_STATEMENT_REGEX ]]
-	[[ ! "<"        =~ $TAG_STATEMENT_REGEX ]]
-	[[ ! "<%"       =~ $TAG_STATEMENT_REGEX ]]
-	[[ ! "<%>"      =~ $TAG_STATEMENT_REGEX ]]
+	[[ ! ""          =~ $TAG_STATEMENT_REGEX ]]
+	[[ ! " "         =~ $TAG_STATEMENT_REGEX ]]
+	[[ ! "<"         =~ $TAG_STATEMENT_REGEX ]]
+	[[ ! "<%"        =~ $TAG_STATEMENT_REGEX ]]
+	[[ ! "<%>"       =~ $TAG_STATEMENT_REGEX ]]
 	[[ ! "<% %>"     =~ $TAG_STATEMENT_REGEX ]]
 	[[ ! "<% tag %>" =~ $TAG_STATEMENT_REGEX ]]
 	[[ ! "<% % %>"   =~ $TAG_STATEMENT_REGEX ]]
@@ -789,7 +790,7 @@ setup() {
 	reset_template_regexes
 
 	[[ ! "<%% %>"   =~ $TAG_STATEMENT_REGEX ]]
-	[[ ! "<% $ %>"   =~ $TAG_STATEMENT_REGEX ]]
+	[[ ! "<% $ %>"  =~ $TAG_STATEMENT_REGEX ]]
 }
 
 @test "TAG_STATEMENT_REGEX: should match on valid statement script tag" {
@@ -807,7 +808,7 @@ setup() {
 	[[ "<%% tag%>"  =~ $TAG_STATEMENT_REGEX ]]
 	[[ "<%%tag %>"  =~ $TAG_STATEMENT_REGEX ]]
 	[[ "<%% tag %>" =~ $TAG_STATEMENT_REGEX ]]
-	[[ "<%% %>"    =~ $TAG_STATEMENT_REGEX ]]
+	[[ "<%% %>"     =~ $TAG_STATEMENT_REGEX ]]
 	[[ "<%% % %>"   =~ $TAG_STATEMENT_REGEX ]]
 
 	#
@@ -817,14 +818,14 @@ setup() {
 	parse_tag_stmt_delim "$"
 	reset_template_regexes
 
-	[[ '<%$%>'      =~ $TAG_STATEMENT_REGEX ]]
-	[[ '<%$ %>'     =~ $TAG_STATEMENT_REGEX ]]
-	[[ '<%$  %>'    =~ $TAG_STATEMENT_REGEX ]]
-	[[ '<%$tag%>'   =~ $TAG_STATEMENT_REGEX ]]
-	[[ '<%$ tag%>'  =~ $TAG_STATEMENT_REGEX ]]
-	[[ '<%$tag %>'  =~ $TAG_STATEMENT_REGEX ]]
+	[[ '<%$%>'       =~ $TAG_STATEMENT_REGEX ]]
+	[[ '<%$ %>'      =~ $TAG_STATEMENT_REGEX ]]
+	[[ '<%$  %>'     =~ $TAG_STATEMENT_REGEX ]]
+	[[ '<%$tag%>'    =~ $TAG_STATEMENT_REGEX ]]
+	[[ '<%$ tag%>'   =~ $TAG_STATEMENT_REGEX ]]
+	[[ '<%$tag %>'   =~ $TAG_STATEMENT_REGEX ]]
 	[[ '<%$ $tag %>' =~ $TAG_STATEMENT_REGEX ]]
 	[[ '<%$$ $%>'    =~ $TAG_STATEMENT_REGEX ]]
 	[[ '<%$$ $ %>'   =~ $TAG_STATEMENT_REGEX ]]
-	[[ '<%$$$%>'    =~ $TAG_STATEMENT_REGEX ]]
+	[[ '<%$$$%>'     =~ $TAG_STATEMENT_REGEX ]]
 }
