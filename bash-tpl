@@ -330,22 +330,6 @@ function push_state() {
 }
 
 ##
-# pop_state
-#
-function pop_state() {
-	if [[ ${#STATES[@]} -gt 0 ]]; then
-		# print it
-		#
-		echo "${STATES[${#STATES[@]} - 1]}"
-		# Remove it
-		#
-		unset STATES[${#STATES[@]}-1]
-	else
-		echo "DEFAULT"
-	fi
-}
-
-##
 # peek_state
 #
 function peek_state() {
@@ -353,6 +337,15 @@ function peek_state() {
 		echo "${STATES[${#STATES[@]} - 1]}"
 	else
 		echo "DEFAULT"
+	fi
+}
+
+##
+# pop_state
+#
+function pop_state() {
+	if [[ ${#STATES[@]} -gt 0 ]]; then
+		unset STATES[${#STATES[@]}-1]
 	fi
 }
 
@@ -370,22 +363,6 @@ function push_statement_indent() {
 }
 
 ##
-# pop_statement_indent
-#
-function pop_statement_indent() {
-	if [[ ${#STATEMENT_INDENTS[@]} -gt 0 ]]; then
-		# Print it
-		#
-		echo "${STATEMENT_INDENTS[${#STATEMENT_INDENTS[@]} - 1]}"
-		# Remove it
-		#
-		unset STATEMENT_INDENTS[${#STATEMENT_INDENTS[@]}-1]
-	else
-		echo ""
-	fi
-}
-
-##
 # peek_statement_indent
 #
 function peek_statement_indent() {
@@ -393,6 +370,15 @@ function peek_statement_indent() {
 		echo "${STATEMENT_INDENTS[${#STATEMENT_INDENTS[@]} - 1]}"
 	else
 		echo ""
+	fi
+}
+
+##
+# pop_statement_indent
+#
+function pop_statement_indent() {
+	if [[ ${#STATEMENT_INDENTS[@]} -gt 0 ]]; then
+		unset STATEMENT_INDENTS[${#STATEMENT_INDENTS[@]}-1]
 	fi
 }
 
@@ -414,14 +400,7 @@ function push_text_indent() {
 #
 function pop_text_indent() {
 	if [[ ${#TEXT_INDENTS[@]} -gt 0 ]]; then
-		# Print it
-		#
-		echo "${TEXT_INDENTS[${#TEXT_INDENTS[@]} - 1]}"
-		# Remove it
-		#
 		unset TEXT_INDENTS[${#TEXT_INDENTS[@]}-1]
-	else
-		echo ""
 	fi
 }
 
@@ -443,14 +422,7 @@ function push_print_indent() {
 #
 function pop_print_indent() {
 	if [[ ${#PRINT_INDENTS[@]} -gt 0 ]]; then
-		# Print it
-		#
-		echo "${PRINT_INDENTS[${#PRINT_INDENTS[@]} - 1]}"
-		# Remove it
-		#
 		unset PRINT_INDENTS[${#PRINT_INDENTS[@]}-1]
-	else
-		echo ""
 	fi
 }
 
@@ -738,7 +710,7 @@ function state_MAYBE_TXT_BLOCK() {
 			# Prev statement is NOT a text block
 			# Discard saved state
 			#
-			pop_statement_indent >> /dev/null
+			pop_statement_indent
 			STATE=$(peek_state)
 			# Re-process line in new state context
 			#
@@ -766,7 +738,7 @@ function state_MAYBE_TXT_BLOCK() {
 			# Prev statement is NOT a text block
 			# Discard saved state
 			#
-			pop_statement_indent >> /dev/null
+			pop_statement_indent
 			STATE=$(peek_state)
 			# Re-process line in new state context
 			#
@@ -794,7 +766,7 @@ function state_MAYBE_TXT_BLOCK() {
 			# Prev statement is NOT a text block
 			# Discard saved state
 			#
-			pop_statement_indent >> /dev/null
+			pop_statement_indent
 			STATE=$(peek_state)
 			# Re-process line in new state context
 			#
@@ -818,7 +790,7 @@ function state_MAYBE_TXT_BLOCK() {
 			# Prev statement is NOT a text block
 			# Discard saved state
 			#
-			pop_statement_indent >> /dev/null
+			pop_statement_indent
 			STATE=$(peek_state)
 		fi
 		: # ignore the line
@@ -844,7 +816,7 @@ function state_MAYBE_TXT_BLOCK() {
 			# Prev statement is NOT a text block
 			# Discard saved state
 			#
-			pop_statement_indent >> /dev/null
+			pop_statement_indent
 			STATE=$(peek_state)
 			# Re-process line in new state context
 			#
@@ -868,12 +840,10 @@ function state_TXT_BLOCK() {
 			# End of text block
 			# Discard saved state
 			#
-			{
-				pop_statement_indent
-				pop_text_indent
-				pop_print_indent
-				pop_state
-			} >> /dev/null
+			pop_statement_indent
+			pop_text_indent
+			pop_print_indent
+			pop_state
 			STATE=$(peek_state)
 			# Print current statement
 			#
@@ -950,7 +920,7 @@ function state_START_STMT_BLOCK() {
 		# End of statement block
 		# Discard saved state
 		#
-		pop_statement_indent >> /dev/null
+		pop_statement_indent
 		STATE=$(peek_state)
 	# Line is text (assumed to be a statement)
 	#
@@ -994,12 +964,10 @@ function state_STMT_BLOCK() {
 		# End of statement block
 		# Discard saved state
 		#
-		{
-			pop_statement_indent
-			pop_text_indent
-			pop_print_indent
-			pop_state
-		} >> /dev/null
+		pop_statement_indent
+		pop_text_indent
+		pop_print_indent
+		pop_state
 		STATE=$(peek_state)
 	# Line is text (assumed to be a statement)
 	#
