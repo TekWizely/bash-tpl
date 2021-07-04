@@ -29,7 +29,7 @@ repos:
         language: system
         files: "^bash-tpl$"
         types: [file]
-        args: [ '-i', '0', '-ci', '-sr', '-kp', '-d' ]
+        args: [ '-i', '0', '-ci', '-sr', '-d' ]
       # shfmt -w (must manually invoke)
       #
       - id: shfmtw

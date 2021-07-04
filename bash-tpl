@@ -1,10 +1,41 @@
 #!/usr/bin/env bash
 #######################################################################
-# Copyright author & co-authors
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2021 TekWizely & co-authors
 #
-# Use of this source code is governed by an MIT-style
-# license that can be found in the LICENSE file or at
-# https://opensource.org/licenses/MIT.
+# Use of this source code is governed by the MIT license.
+# See the accompanying LICENSE file, if present, or visit:
+#   https://opensource.org/licenses/MIT
+#######################################################################
+VERSION="v0.1.0"
+#######################################################################
+# Bash-TPL: A Smart, Lightweight shell script templating engine
+#
+# Lets you you mark up textual files with shell commands and variable
+# replacements, while minimally impacting your original file layout.
+#
+# Templates are compiled into shell scripts that you can invoke
+# (along with variables, arguments, etc) to generate complete and
+# well-formatted output text files.
+#
+#  Smart
+#
+# Encourages you to use extra indentation to write clean, well-
+# formatted templates, and smartly removes the indentations from the
+# generated template scripts.
+#
+# This results in both templates that are easily readable and
+# maintainable, and generated text files that look as good as if they
+# were written by hand.
+#
+#  NOTE: Consistent Formatting
+#
+# The key to success with Bash-TPL's indentation fix-up logic is
+# Consistent Formatting; using consistent indentation throughout your
+# template will yield best results.
+#
+# Learn More:
+#   https://github.com/TekWizely/bash-tpl
 #######################################################################
 
 #######################################################################
@@ -223,98 +254,6 @@ function regex_quote() {
 #
 function normalize_directive() {
 	tr 'a-z_' 'A-Z-' <<< "${1}"
-}
-
-##
-# parse_env_delims - Set Delims from Environment Vars
-#
-function parse_env_delims() {
-	if [ -n "${BASH_TPL_TAG_DELIMS}" ]; then
-		parse_tag_delims "${BASH_TPL_TAG_DELIMS}" "BASH_TPL_TAG_DELIMS"
-	fi
-
-	if [ -n "${BASH_TPL_TAG_STMT_DELIM}" ]; then
-		parse_tag_stmt_delim "${BASH_TPL_TAG_STMT_DELIM}" "BASH_TPL_TAG_STMT_DELIM"
-	fi
-
-	if [ -n "${BASH_TPL_STMT_DELIM}" ]; then
-		parse_stmt_delim "${BASH_TPL_STMT_DELIM}" "BASH_TPL_STMT_DELIM"
-	fi
-
-	if [ -n "${BASH_TPL_STMT_BLOCK_DELIMS}" ]; then
-		parse_stmt_block_delims "${BASH_TPL_STMT_BLOCK_DELIMS}" "BASH_TPL_STMT_BLOCK_DELIMS"
-	fi
-
-	if [ -n "${BASH_TPL_DIR_DELIM}" ]; then
-		parse_directive_delim "${BASH_TPL_DIR_DELIM}" "BASH_TPL_DIR_DELIM"
-	fi
-
-	if [ -n "${BASH_TPL_CMT_DELIM}" ]; then
-		parse_comment_delim "${BASH_TPL_CMT_DELIM}" "BASH_TPL_CMT_DELIM"
-	fi
-}
-
-##
-# parse_args
-# $1 = remaining arg varname
-# $2+ args to parse
-#
-function parse_args() {
-	local -n __local_parse_args=$1 # nameref
-	shift
-	while (("$#")); do
-		case "$1" in
-			--tag-delims)
-				parse_tag_delims "$2" "$1"
-				shift 2
-				;;
-			--tag-stmt-delim)
-				parse_tag_stmt_delim "$2" "$1"
-				shift 2
-				;;
-			--stmt-delim)
-				parse_stmt_delim "$2" "$1"
-				shift 2
-				;;
-			--stmt-block-delims)
-				parse_stmt_block_delims "$2" "$1"
-				shift 2
-				;;
-			--dir-delim | --directive-delim)
-				parse_directive_delim "$2" "$1"
-				shift 2
-				;;
-			--cmt-delim | --comment-delim)
-				parse_comment_delim "$2" "$1"
-				shift 2
-				;;
-			-o | --output-file)
-				if [ -n "${2}" ]; then
-					OUPUT_FILE="${2}"
-				else
-					echo "Error: Invalid or missing value for --output-file: '${2}'" >&2
-					exit 1
-				fi
-				shift 2
-				;;
-			--stmt-indent)
-				BASE_STMT_INDENT="${2}"
-				shift 2
-				;;
-			--text-indent)
-				BASE_TEXT_INDENT="${2}"
-				shift 2
-				;;
-			--* | -*=) # unsupported flags
-				echo "Error: Unknown flag $1" >&2
-				exit 1
-				;;
-			*) # preserve positional arguments
-				__local_parse_args+=("$1")
-				shift
-				;;
-		esac
-	done
 }
 
 #######################################################################
@@ -568,7 +507,8 @@ function process_directive() {
 			text_indent=$(get_text_indent "${1}")
 			tpl="${3}"
 			trim tpl
-			"${BASH_SOURCE[0]}" \
+			# shellcheck disable=SC2128  # We choose BASH_SOURCE vs BASH_SOURCE[0] for compatability
+			"${BASH_SOURCE}" \
 				--stmt-indent "${stmt_indent}" \
 				--text-indent "${text_indent}" \
 				--tag-delims "${TAG_START_DELIM1}${TAG_START_DELIM2} ${TAG_STOP_DELIM1}${TAG_STOP_DELIM2}" \
@@ -997,31 +937,191 @@ function state_STMT_BLOCK() {
 # Main
 #######################################################################
 
+function version() {
+	printf "%s\n" "${VERSION}"
+}
+
+function usage() {
+	cat << USAGE
+Bash-TPL is a smart, lightweight shell script templating engine
+
+usage: bash-tpl [flags] file
+
+options:
+  -h, --help
+        show help screen
+  --version
+        show version
+  -o, --output-file <filename>
+        write to specified file (default: stdout)
+
+customize delimeters:
+  --tag-delims 'xx xx'
+        set tag delimeters (default: '<% %>')
+  --tag-stmt-delim 'x'
+        set tag statement delimeter (default: '%')
+  --stmt-delim 'x+'
+        set statement delimeter (default: '%')
+  --stmt-block-delims 'x+ x+'
+        set statement block delimeters
+        defaults to statement delimeter if not explicitly set
+  --dir-delim
+  --directive-delim 'x+'
+        set directive delimeter (default: '.')
+  --cmt-delim
+  --comment-delim 'x+'
+        set template comment delimeter
+        defaults to directive delimeter + '#' if not explicitly set
+
+supported environment variables:
+    BASH_TPL_TAG_DELIMS
+    BASH_TPL_TAG_STMT_DELIM
+    BASH_TPL_STMT_DELIM
+    BASH_TPL_STMT_BLOCK_DELIMS
+    BASH_TPL_DIR_DELIM
+    BASH_TPL_CMT_DELIM
+
+example:
+    $ echo 'Hello <% \$NAME %>' > test.tpl
+    $ NAME="Chuck Norris" source <( bash-tpl test.tpl )
+
+    Hello Chuck Norris
+
+learn more: https://github.com/TekWizely/bash-tpl
+
+USAGE
+}
+
+##
+# parse_args
+# $1 = remaining arg varname
+# $2+ args to parse
+#
+function parse_args() {
+	local -n __local_parse_args=$1 # nameref
+	shift
+	while (("$#")); do
+		case "$1" in
+			-h | --help)
+				usage
+				exit 0
+				;;
+			--version)
+				version
+				exit 0
+				;;
+			-o | --output-file)
+				if [ -n "${2}" ]; then
+					OUPUT_FILE="${2}"
+				else
+					echo "Error: Invalid or missing value for --output-file: '${2}'" >&2
+					exit 1
+				fi
+				shift 2
+				;;
+			--tag-delims)
+				parse_tag_delims "$2" "$1"
+				shift 2
+				;;
+			--tag-stmt-delim)
+				parse_tag_stmt_delim "$2" "$1"
+				shift 2
+				;;
+			--stmt-delim)
+				parse_stmt_delim "$2" "$1"
+				shift 2
+				;;
+			--stmt-block-delims)
+				parse_stmt_block_delims "$2" "$1"
+				shift 2
+				;;
+			--dir-delim | --directive-delim)
+				parse_directive_delim "$2" "$1"
+				shift 2
+				;;
+			--cmt-delim | --comment-delim)
+				parse_comment_delim "$2" "$1"
+				shift 2
+				;;
+			--stmt-indent)
+				BASE_STMT_INDENT="${2}"
+				shift 2
+				;;
+			--text-indent)
+				BASE_TEXT_INDENT="${2}"
+				shift 2
+				;;
+			--* | -*=) # unsupported flags
+				echo "Error: Unknown flag $1" >&2
+				exit 1
+				;;
+			*) # preserve positional arguments
+				__local_parse_args+=("$1")
+				shift
+				;;
+		esac
+	done
+}
+
+##
+# parse_env_delims - Set Delims from Environment Vars
+#
+function parse_env_delims() {
+	if [ -n "${BASH_TPL_TAG_DELIMS}" ]; then
+		parse_tag_delims "${BASH_TPL_TAG_DELIMS}" "BASH_TPL_TAG_DELIMS"
+	fi
+
+	if [ -n "${BASH_TPL_TAG_STMT_DELIM}" ]; then
+		parse_tag_stmt_delim "${BASH_TPL_TAG_STMT_DELIM}" "BASH_TPL_TAG_STMT_DELIM"
+	fi
+
+	if [ -n "${BASH_TPL_STMT_DELIM}" ]; then
+		parse_stmt_delim "${BASH_TPL_STMT_DELIM}" "BASH_TPL_STMT_DELIM"
+	fi
+
+	if [ -n "${BASH_TPL_STMT_BLOCK_DELIMS}" ]; then
+		parse_stmt_block_delims "${BASH_TPL_STMT_BLOCK_DELIMS}" "BASH_TPL_STMT_BLOCK_DELIMS"
+	fi
+
+	if [ -n "${BASH_TPL_DIR_DELIM}" ]; then
+		parse_directive_delim "${BASH_TPL_DIR_DELIM}" "BASH_TPL_DIR_DELIM"
+	fi
+
+	if [ -n "${BASH_TPL_CMT_DELIM}" ]; then
+		parse_comment_delim "${BASH_TPL_CMT_DELIM}" "BASH_TPL_CMT_DELIM"
+	fi
+}
+
 # Only process main logic if not being sourced (ie tested)
 #
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-	OUPUT_FILE=""
+(return 0 2> /dev/null) && return 0
 
-	BASE_STMT_INDENT=""
-	BASE_TEXT_INDENT=""
+OUPUT_FILE=""
 
-	reset_delims
-	parse_env_delims
+BASE_STMT_INDENT=""
+BASE_TEXT_INDENT=""
 
-	args=()
-	parse_args args "$@"
-	set -- "${args[@]}"
+reset_delims
+parse_env_delims
 
-	reset_template_regexes
+args=()
+parse_args args "$@"
+set -- "${args[@]}"
 
-	if [[ -z "${1}" || ! -r "${1}" ]]; then
-		echo "File not found: '${1}'" >&2
-		exit 1
-	fi
-
-	if [[ -n "${OUPUT_FILE}" ]]; then
-		exec >> "${OUPUT_FILE}"
-	fi
-
-	process_file "${1}"
+if [[ -z "${1}" ]]; then
+	usage
+	exit 1
 fi
+
+if [[ ! -r "${1}" ]]; then
+	echo "File not found: '${1}'" >&2
+	exit 1
+fi
+
+reset_template_regexes
+
+if [[ -n "${OUPUT_FILE}" ]]; then
+	exec >> "${OUPUT_FILE}"
+fi
+
+process_file "${1}"
