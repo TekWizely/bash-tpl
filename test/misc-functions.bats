@@ -76,42 +76,57 @@ setup() {
 }
 
 @test "misc-function: escape_regex" {
+	local value
 
-	run escape_regex ''
-	[[ "${output}" == '' ]]
+	value=''
+	escape_regex value
+	[[ "${value}" == '' ]]
 
-	run escape_regex ' '
-	[[ "${output}" == ' ' ]]
+	value=' '
+	escape_regex value
+	[[ "${value}" == ' ' ]]
 
-	run escape_regex '  '
-	[[ "${output}" == '  ' ]]
+	value='  '
+	escape_regex value
+	[[ "${value}" == '  ' ]]
 
-	run escape_regex 'abcABC123_-'
-	[[ "${output}" == 'abcABC123_-' ]]
+	value='abcABC123_-'
+	escape_regex value
+	[[ "${value}" == 'abcABC123_-' ]]
 
-	run escape_regex '][\.|$()?+*^'
-	[[ "${output}" == '\]\[\\\.\|\$\(\)\?\+\*\^' ]]
+	value='][\.|$()?+*^'
+	escape_regex value
+	[[ "${value}" == '\]\[\\\.\|\$\(\)\?\+\*\^' ]]
 
-	run escape_regex '{}'
-	[[ "${output}" == '{}' ]]
+	value='{}'
+	escape_regex value
+	[[ "${value}" == '{}' ]]
 
-	run escape_regex ' . '
-	[[ "${output}" == ' \. ' ]]
+	value=' . '
+	escape_regex value
+	[[ "${value}" == ' \. ' ]]
 }
 
 @test "misc-function: normalize_directive" {
-	run normalize_directive ''
-	[[ "${output}" == '' ]]
+	local value
 
-	run normalize_directive ' '
-	[[ "${output}" == ' ' ]]
+	value=''
+	normalize_directive value
+	[[ "${value}" == '' ]]
 
-	run normalize_directive '  '
-	[[ "${output}" == '  ' ]]
+	value=' '
+	normalize_directive value
+	[[ "${value}" == ' ' ]]
 
-	run normalize_directive 'abc_ABC-123'
-	[[ "${output}" == 'ABC-ABC-123' ]]
+	value='  '
+	normalize_directive value
+	[[ "${value}" == '  ' ]]
 
-	run normalize_directive ' _ '
-	[[ "${output}" == ' - ' ]]
+	value='abc_ABC-123'
+	normalize_directive value
+	[[ "${value}" == 'ABC-ABC-123' ]]
+
+	value=' _ '
+	normalize_directive value
+	[[ "${value}" == ' - ' ]]
 }

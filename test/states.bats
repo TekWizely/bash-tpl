@@ -23,13 +23,13 @@ setup() {
 	[[ "${STATES[1]}" == "TWO" ]]
 }
 
-@test "peek_state: Should return values from tail of STATES array" {
+@test "peek_state: Should set STATE from tail of STATES array" {
 	push_state "ONE"
 	[[ ${#STATES[@]} -eq  1    ]]
 	[[ "${STATES[0]}" == "ONE" ]]
 
-	run peek_state
-	[[ "${output}"    == "ONE" ]]
+	peek_state
+	[[ "${STATE}"     == "ONE" ]]
 	[[ ${#STATES[@]} -eq  1    ]]
 	[[ "${STATES[0]}" == "ONE" ]]
 
@@ -38,17 +38,19 @@ setup() {
 	[[ "${STATES[0]}" == "ONE" ]]
 	[[ "${STATES[1]}" == "TWO" ]]
 
-	run peek_state
+	peek_state
+	[[ "${STATE}"    == "TWO"  ]]
 	[[ ${#STATES[@]} -eq  2    ]]
 	[[ "${STATES[0]}" == "ONE" ]]
 	[[ "${STATES[1]}" == "TWO" ]]
 }
 
-@test "peek_state: Should return 'DEFAULT' when STATES array is empty" {
+@test "peek_state: Should set STATE to 'DEFAULT' when STATES array is empty" {
 	[[ ${#STATES[@]} -eq  0    ]]
 
-	run peek_state
-	[[ "${output}"    == "DEFAULT" ]]
+	STATE="BATS"
+	peek_state
+	[[ "${STATE}"     == "DEFAULT" ]]
 	[[ ${#STATES[@]} -eq  0        ]]
 }
 
