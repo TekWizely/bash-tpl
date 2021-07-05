@@ -183,28 +183,28 @@ function reset_template_regexes() {
 
 	local d ds d1 d2 d3 d4
 
-	d=$(regex_quote "${DIRECTIVE_DELIM}")
+	d=$(escape_regex "${DIRECTIVE_DELIM}")
 	DIRECTIVE_REGEX="^([[:blank:]]*)${d}([a-zA-Z_-]+)(.*)\$"
 
-	d=$(regex_quote "${COMMENT_DELIM}")
+	d=$(escape_regex "${COMMENT_DELIM}")
 	COMMENT_REGEX="^([[:blank:]]*)${d}"
 
-	d=$(regex_quote "${STMT_DELIM}")
+	d=$(escape_regex "${STMT_DELIM}")
 	STATEMENT_REGEX="^([[:blank:]]*)${d}[[:blank:]]+(.+)\$"
 
-	d=$(regex_quote "${STMT_BLOCK_START_DELIM}")
+	d=$(escape_regex "${STMT_BLOCK_START_DELIM}")
 	STATEMENT_BLOCK_START_REGEX="^([[:blank:]]*)${d}[[:blank:]]*\$"
 
-	d=$(regex_quote "${STMT_BLOCK_STOP_DELIM}")
+	d=$(escape_regex "${STMT_BLOCK_STOP_DELIM}")
 	STATEMENT_BLOCK_STOP_REGEX="^([[:blank:]]*)${d}[[:blank:]]*\$"
 
 	TEXT_REGEX='^([[:blank:]]*)([^[:blank:]](.*))?$'
 
-	d1=$(regex_quote "${TAG_START_DELIM1}")
-	d2=$(regex_quote "${TAG_START_DELIM2}")
-	d3=$(regex_quote "${TAG_STOP_DELIM1}")
-	d4=$(regex_quote "${TAG_STOP_DELIM2}")
-	ds=$(regex_quote "${TAG_STMT_DELIM}")
+	d1=$(escape_regex "${TAG_START_DELIM1}")
+	d2=$(escape_regex "${TAG_START_DELIM2}")
+	d3=$(escape_regex "${TAG_STOP_DELIM1}")
+	d4=$(escape_regex "${TAG_STOP_DELIM2}")
+	ds=$(escape_regex "${TAG_STMT_DELIM}")
 
 	TAG_TEXT_REGEX="^([^${d1}]+|${d1}$|${d1}[^${d1}${d2}]+)(.*)"
 
@@ -240,13 +240,13 @@ function trim() {
 }
 
 ##
-# regex_quote
-# usage: quoted=$( regex_quote "${source}" )
+# escape_regex
+# usage: quoted=$( escape_regex "${source}" )
 #
-function regex_quote() {
+function escape_regex() {
 	# shellcheck disable=SC2001  # Too complex for ${variable//search/replace}
 	# shellcheck disable=SC2016  # Not using expansion, prefer single quotes
-	sed 's/[][\.|$()?+*^]/\\&/g' <<< "${1}" # Omits: {}
+	sed 's/[][\.|$()?+*^]/\\&/g' <<< "${1}" # Omits: [{}]
 }
 
 ##
@@ -499,14 +499,16 @@ DELIM_DIR_COMMENT_REGEX='[Cc][Oo][Mm][Mm][Ee][Nn][Tt]\s*=\s*"([^"]*)"'
 # $3 = directive arg(s)
 #
 function process_directive() {
-	local directive stmt_indent text_indent tpl
+	local directive stmt_indent text_indent
 	directive=$(normalize_directive "${2}")
 	case "${directive}" in
 		INCLUDE)
 			stmt_indent="${1}"
 			text_indent=$(get_text_indent "${1}")
-			tpl="${3}"
-			trim tpl
+			local args args_arr
+			args="${3}"
+			trim args
+			declare -a "args_arr=(${args})"
 			# shellcheck disable=SC2128  # We choose BASH_SOURCE vs BASH_SOURCE[0] for compatability
 			"${BASH_SOURCE}" \
 				--stmt-indent "${stmt_indent}" \
@@ -517,7 +519,7 @@ function process_directive() {
 				--stmt-block-delims "${STMT_BLOCK_START_DELIM} ${STMT_BLOCK_STOP_DELIM}" \
 				--dir-delim "${DIRECTIVE_DELIM}" \
 				--cmt-delim "${COMMENT_DELIM}" \
-				"${tpl}"
+				"${args_arr[@]}"
 			;;
 		DELIMS)
 			# TAG
@@ -972,6 +974,9 @@ customize delimeters:
   --comment-delim 'x+'
         set template comment delimeter
         defaults to directive delimeter + '#' if not explicitly set
+  --reset-delims
+        reset all delimeters to defaults
+        delim options provided after this option are honored
 
 supported environment variables:
     BASH_TPL_TAG_DELIMS
@@ -1018,6 +1023,10 @@ function parse_args() {
 					exit 1
 				fi
 				shift 2
+				;;
+			--reset-delims)
+				reset_delims
+				shift
 				;;
 			--tag-delims)
 				parse_tag_delims "$2" "$1"

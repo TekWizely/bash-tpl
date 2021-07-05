@@ -75,27 +75,27 @@ setup() {
 	[[ "${value}" == $'\x01\t \x7f' ]]
 }
 
-@test "misc-function: regex_quote" {
+@test "misc-function: escape_regex" {
 
-	run regex_quote ''
+	run escape_regex ''
 	[[ "${output}" == '' ]]
 
-	run regex_quote ' '
+	run escape_regex ' '
 	[[ "${output}" == ' ' ]]
 
-	run regex_quote '  '
+	run escape_regex '  '
 	[[ "${output}" == '  ' ]]
 
-	run regex_quote 'abcABC123_-'
+	run escape_regex 'abcABC123_-'
 	[[ "${output}" == 'abcABC123_-' ]]
 
-	run regex_quote '][\.|$()?+*^'
+	run escape_regex '][\.|$()?+*^'
 	[[ "${output}" == '\]\[\\\.\|\$\(\)\?\+\*\^' ]]
 
-	run regex_quote '{}'
+	run escape_regex '{}'
 	[[ "${output}" == '{}' ]]
 
-	run regex_quote ' . '
+	run escape_regex ' . '
 	[[ "${output}" == ' \. ' ]]
 }
 
