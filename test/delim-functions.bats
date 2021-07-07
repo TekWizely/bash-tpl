@@ -26,13 +26,13 @@ setup() {
 	#
 	run parse_tag_delims '{{}}' 'BATS'
 	[[ $status -eq 1 ]]
-	[[ "$output" == "Error: Invalid or missing tag delimeter values for BATS: '{{}}'" ]]
+	[[ "$output" == "Error: Invalid or missing tag delimiter values for BATS: '{{}}'" ]]
 
 	# All Spaces
 	#
 	run parse_tag_delims '     ' 'BATS'
 	[[ $status -eq 1 ]]
-	[[ "$output" == "Error: Invalid or missing tag delimeter values for BATS: '     '" ]]
+	[[ "$output" == "Error: Invalid or missing tag delimiter values for BATS: '     '" ]]
 }
 
 @test "parse_tag_delims: Should process valid input" {
@@ -62,13 +62,13 @@ setup() {
 	#
 	run parse_tag_stmt_delim '%%' 'BATS'
 	[[ $status -eq 1 ]]
-	[[ "$output" == "Error: Invalid or missing tag stmt delimeter value for BATS: '%%'" ]]
+	[[ "$output" == "Error: Invalid or missing tag stmt delimiter value for BATS: '%%'" ]]
 
 	# Space
 	#
 	run parse_tag_stmt_delim ' ' 'BATS'
 	[[ $status -eq 1 ]]
-	[[ "$output" == "Error: Invalid or missing tag stmt delimeter value for BATS: ' '" ]]
+	[[ "$output" == "Error: Invalid or missing tag stmt delimiter value for BATS: ' '" ]]
 }
 
 @test "parse_tag_stmt_delim: Should process valid input" {
@@ -89,13 +89,13 @@ setup() {
 	#
 	run parse_stmt_delim '' 'BATS'
 	[[ $status -eq 1 ]]
-	[[ "$output" == "Error: Invalid or missing stmt delimeter value for BATS: ''" ]]
+	[[ "$output" == "Error: Invalid or missing stmt delimiter value for BATS: ''" ]]
 
 	# Space
 	#
 	run parse_stmt_delim ' ' 'BATS'
 	[[ $status -eq 1 ]]
-	[[ "$output" == "Error: Invalid or missing stmt delimeter value for BATS: ' '" ]]
+	[[ "$output" == "Error: Invalid or missing stmt delimiter value for BATS: ' '" ]]
 }
 
 @test "parse_stmt_delim: Should process valid input" {
@@ -116,7 +116,7 @@ setup() {
 	#
 	run parse_stmt_block_delims '<%%>' 'BATS'
 	[[ $status -eq 1 ]]
-	[[ "$output" == "Error: Invalid or missing stmt-block delimeter values for BATS: '<%%>'" ]]
+	[[ "$output" == "Error: Invalid or missing stmt-block delimiter values for BATS: '<%%>'" ]]
 }
 
 @test "parse_stmt_block_delims: Should process valid input" {
@@ -147,13 +147,13 @@ setup() {
 	#
 	run parse_directive_delim '' 'BATS'
 	[[ $status -eq 1 ]]
-	[[ "$output" == "Error: Invalid or missing directive delimeter value for BATS: ''" ]]
+	[[ "$output" == "Error: Invalid or missing directive delimiter value for BATS: ''" ]]
 
 	# Space
 	#
 	run parse_directive_delim ' ' 'BATS'
 	[[ $status -eq 1 ]]
-	[[ "$output" == "Error: Invalid or missing directive delimeter value for BATS: ' '" ]]
+	[[ "$output" == "Error: Invalid or missing directive delimiter value for BATS: ' '" ]]
 }
 
 @test "parse_directive_delim: Should process valid input" {
@@ -174,13 +174,13 @@ setup() {
 	#
 	run parse_comment_delim '' 'BATS'
 	[[ $status -eq 1 ]]
-	[[ "$output" == "Error: Invalid or missing comment delimeter value for BATS: ''" ]]
+	[[ "$output" == "Error: Invalid or missing comment delimiter value for BATS: ''" ]]
 
 	# Space
 	#
 	run parse_comment_delim ' ' 'BATS'
 	[[ $status -eq 1 ]]
-	[[ "$output" == "Error: Invalid or missing comment delimeter value for BATS: ' '" ]]
+	[[ "$output" == "Error: Invalid or missing comment delimiter value for BATS: ' '" ]]
 }
 
 @test "parse_comment_delim: Should process valid input" {

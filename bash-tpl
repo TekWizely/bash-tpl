@@ -82,7 +82,7 @@ function parse_tag_delims() {
 		TAG_STOP_DELIM1="${BASH_REMATCH[3]}"
 		TAG_STOP_DELIM2="${BASH_REMATCH[4]}"
 	else
-		echo "Error: Invalid or missing tag delimeter values for ${2-tag delims}: '${1}'" >&2
+		echo "Error: Invalid or missing tag delimiter values for ${2-tag delims}: '${1}'" >&2
 		exit 1
 	fi
 }
@@ -96,7 +96,7 @@ function parse_tag_stmt_delim() {
 	if [[ "${1}" =~ $TAG_STMT_DELIM_REGEX ]]; then
 		TAG_STMT_DELIM="${BASH_REMATCH[1]}"
 	else
-		echo "Error: Invalid or missing tag stmt delimeter value for ${2-tag stmt delim}: '${1}'" >&2
+		echo "Error: Invalid or missing tag stmt delimiter value for ${2-tag stmt delim}: '${1}'" >&2
 		exit 1
 	fi
 }
@@ -110,7 +110,7 @@ function parse_stmt_delim() {
 	if [[ "${1}" =~ $STMT_DELIM_REGEX ]]; then
 		STMT_DELIM="${BASH_REMATCH[1]}"
 	else
-		echo "Error: Invalid or missing stmt delimeter value for ${2:-stmt delim}: '${1}'" >&2
+		echo "Error: Invalid or missing stmt delimiter value for ${2:-stmt delim}: '${1}'" >&2
 		exit 1
 	fi
 }
@@ -126,7 +126,7 @@ function parse_stmt_block_delims() {
 		STMT_BLOCK_STOP_DELIM="${BASH_REMATCH[2]}"
 		STMT_BLOCK_DELIM_UNDEFINED=''
 	else
-		echo "Error: Invalid or missing stmt-block delimeter values for ${2:-stmt-block delims}: '${1}'" >&2
+		echo "Error: Invalid or missing stmt-block delimiter values for ${2:-stmt-block delims}: '${1}'" >&2
 		exit 1
 	fi
 }
@@ -140,7 +140,7 @@ function parse_directive_delim() {
 	if [[ "${1}" =~ $STMT_DELIM_REGEX ]]; then
 		DIRECTIVE_DELIM="${1}"
 	else
-		echo "Error: Invalid or missing directive delimeter value for ${2:-dir delim}: '${1}'" >&2
+		echo "Error: Invalid or missing directive delimiter value for ${2:-dir delim}: '${1}'" >&2
 		exit 1
 	fi
 }
@@ -155,7 +155,7 @@ function parse_comment_delim() {
 		COMMENT_DELIM="${1}"
 		COMMENT_DELIM_UNDEFINED=''
 	else
-		echo "Error: Invalid or missing comment delimeter value for ${2:-cmt delim}: '${1}'" >&2
+		echo "Error: Invalid or missing comment delimiter value for ${2:-cmt delim}: '${1}'" >&2
 		exit 1
 	fi
 }
@@ -976,25 +976,25 @@ options:
   -o, --output-file <filename>
         write to specified file (default: stdout)
 
-customize delimeters:
+customize delimiters:
   --tag-delims 'xx xx'
-        set tag delimeters (default: '<% %>')
+        set tag delimiters (default: '<% %>')
   --tag-stmt-delim 'x'
-        set tag statement delimeter (default: '%')
+        set tag statement delimiter (default: '%')
   --stmt-delim 'x+'
-        set statement delimeter (default: '%')
+        set statement delimiter (default: '%')
   --stmt-block-delims 'x+ x+'
-        set statement block delimeters
-        defaults to statement delimeter if not explicitly set
+        set statement block delimiters
+        defaults to statement delimiter if not explicitly set
   --dir-delim
   --directive-delim 'x+'
-        set directive delimeter (default: '.')
+        set directive delimiter (default: '.')
   --cmt-delim
   --comment-delim 'x+'
-        set template comment delimeter
-        defaults to directive delimeter + '#' if not explicitly set
+        set template comment delimiter
+        defaults to directive delimiter + '#' if not explicitly set
   --reset-delims
-        reset all delimeters to defaults
+        reset all delimiters to defaults
         delim options provided after this option are honored
 
 supported environment variables:
@@ -1044,6 +1044,8 @@ function parse_args() {
 				shift 2
 				;;
 			--reset-delims)
+				# Reset delims immediately - Any delim flags after this will be honored
+				#
 				reset_delims
 				shift
 				;;
