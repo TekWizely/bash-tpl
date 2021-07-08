@@ -12,7 +12,7 @@ Templates are compiled into shell scripts that you can invoke (along with variab
 
 Bash-TPL is presented as a single-file Bash script, making it both easy to bring along with your projects, and even easier to use, since there is no need to compile any source code.
 
-See [Adding `bash-tpl` into your project](#adding--bash-tpl--into-your-project) for more information.
+See [Adding `bash-tpl` into your project](#adding-bash-tpl-into-your-project) for more information.
 
 ##### Smart
 
@@ -52,7 +52,7 @@ printf "%s\n" Plain\ text\,\ "$VARIABLE"\,\ "$(echo subshell)"
 - [Contributing](#contributing)
 - [Contact](#contact)
 - [License](#license)
-  - [Adding `bash-tpl` into your project](#adding--bash-tpl--into-your-project)
+  - [Adding `bash-tpl` into your project](#adding-bash-tpl-into-your-project)
 
 --------
 ## Using
