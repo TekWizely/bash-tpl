@@ -7,7 +7,7 @@
 # See the accompanying LICENSE file, if present, or visit:
 #   https://opensource.org/licenses/MIT
 #######################################################################
-VERSION="v0.1.0"
+VERSION="v0.2.0"
 #######################################################################
 # Bash-TPL: A Smart, Lightweight shell script templating engine
 #
