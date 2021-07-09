@@ -39,8 +39,8 @@ printf "%s\n" Plain\ text\,\ "$VARIABLE"\,\ "$(echo subshell)"
 
 - [Template Tags](#template-tags)
   - [Text Tags](#text-tags)
-  - [Script Lines](#script-lines)
-  - [Script Blocks](#script-blocks)
+  - [Statement Lines](#statement-lines)
+  - [Statement Blocks](#statement-blocks)
   - [Template Comments](#template-comments)
 - [Directives](#directives)
   - [INCLUDE](#include)
