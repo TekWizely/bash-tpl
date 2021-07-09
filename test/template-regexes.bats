@@ -622,6 +622,10 @@ setup() {
 	[[ ! "<% tag >" =~ $TAG_STD_REGEX ]]
 	[[ ! "<% % >"   =~ $TAG_STD_REGEX ]]
 
+	[[ ! "<%%%>"    =~ $TAG_STD_REGEX ]] # Caveat to make the regex work
+	[[ ! "<% %%>"   =~ $TAG_STD_REGEX ]] # Caveat to make the regex work
+#	[[ ! "<%%%%>"   =~ $TAG_STD_REGEX ]] # Caveat to make the regex work
+
 	#
 	# Custom Delims
 	#
@@ -656,12 +660,11 @@ setup() {
 	[[ "<% tag%>"    =~ $TAG_STD_REGEX ]]
 	[[ "<%tag %>"    =~ $TAG_STD_REGEX ]]
 	[[ "<% tag %>"   =~ $TAG_STD_REGEX ]]
-	[[ "<%%%>"       =~ $TAG_STD_REGEX ]]
-	[[ "<% %%>"      =~ $TAG_STD_REGEX ]]
 	[[ "<%% %>"      =~ $TAG_STD_REGEX ]]
 	[[ "<% % %>"     =~ $TAG_STD_REGEX ]]
-	[[ "<%%%%>"      =~ $TAG_STD_REGEX ]]
 	[[ '<% $HOME %>' =~ $TAG_STD_REGEX ]]
+
+	[[ "<%%%%>"      =~ $TAG_STD_REGEX ]]
 
 	#
 	# Custom Delims
@@ -677,11 +680,94 @@ setup() {
 	[[ "{{ tag}}"   =~ $TAG_STD_REGEX ]]
 	[[ "{{tag }}"   =~ $TAG_STD_REGEX ]]
 	[[ "{{ tag }}>" =~ $TAG_STD_REGEX ]]
+
 	[[ "{{}}}"      =~ $TAG_STD_REGEX ]]
-	[[ "{{ }}}"     =~ $TAG_STD_REGEX ]]
 	[[ "{{} }}"     =~ $TAG_STD_REGEX ]]
 	[[ "{{ } }}"    =~ $TAG_STD_REGEX ]]
-	[[ "{{}}}}}"    =~ $TAG_STD_REGEX ]]
+
+	[[ "{{ }}}" =~ $TAG_STD_REGEX  ]]
+	[[ "${BASH_REMATCH[1]}" == ' ' ]]
+	[[ "${BASH_REMATCH[5]}" == '}' ]]
+
+	[[ "{{}}}}}" =~ $TAG_STD_REGEX   ]]
+	[[ "${BASH_REMATCH[1]}" == ''    ]]
+	[[ "${BASH_REMATCH[5]}" == '}}}' ]]
+}
+
+@test "TAG_STD_REGEX: should only match 1st tag if multiple tags present" {
+	#
+	# Default Delims
+	#
+
+	reset_delims
+	reset_template_regexes
+
+	[[ "<% . %>."  =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == ' . ' ]]
+	[[ "${BASH_REMATCH[5]}" == '.'   ]]
+
+	[[ "<% . %><"  =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == ' . ' ]]
+	[[ "${BASH_REMATCH[5]}" == '<'   ]]
+
+	[[ "<% . %>%"  =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == ' . ' ]]
+	[[ "${BASH_REMATCH[5]}" == '%'   ]]
+
+	[[ "<% . %><%"  =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == ' . '  ]]
+	[[ "${BASH_REMATCH[5]}" == '<%'   ]]
+
+	[[ "<% . %>>"  =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == ' . ' ]]
+	[[ "${BASH_REMATCH[5]}" == '>'   ]]
+
+	[[ "<% . %>%>"  =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == ' . '  ]]
+	[[ "${BASH_REMATCH[5]}" == '%>'   ]]
+
+	[[ "<% . %><% . %>"  =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == ' . '       ]]
+	[[ "${BASH_REMATCH[5]}" == '<% . %>'   ]]
+
+	[[ "<% . %>.<% . %>"  =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == ' . '        ]]
+	[[ "${BASH_REMATCH[5]}" == '.<% . %>'   ]]
+
+	#
+	# Custom Delims
+	#
+
+	parse_tag_delims "{{ }}"
+	reset_template_regexes
+
+	[[ "{{ . }}." =~ $TAG_STD_REGEX  ]]
+	[[ "${BASH_REMATCH[1]}" == ' . ' ]]
+	[[ "${BASH_REMATCH[5]}" == '.'   ]]
+
+	[[ "{{ . }}{" =~ $TAG_STD_REGEX  ]]
+	[[ "${BASH_REMATCH[1]}" == ' . ' ]]
+	[[ "${BASH_REMATCH[5]}" == '{'   ]]
+
+	[[ "{{ . }}{{" =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == ' . ' ]]
+	[[ "${BASH_REMATCH[5]}" == '{{'  ]]
+
+	[[ "{{ . }}}" =~ $TAG_STD_REGEX  ]]
+	[[ "${BASH_REMATCH[1]}" == ' . ' ]]
+	[[ "${BASH_REMATCH[5]}" == '}'   ]]
+
+	[[ "{{ . }}}}" =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == ' . ' ]]
+	[[ "${BASH_REMATCH[5]}" == '}}'  ]]
+
+	[[ "{{ . }}{{ . }}" =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == ' . '      ]]
+	[[ "${BASH_REMATCH[5]}" == '{{ . }}'  ]]
+
+	[[ "{{ . }}.{{ . }}" =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == ' . '       ]]
+	[[ "${BASH_REMATCH[5]}" == '.{{ . }}'  ]]
 }
 
 @test "TAG_QUOTE_REGEX: should fail on invalid quote script tag" {
@@ -702,6 +788,9 @@ setup() {
 	[[ ! "<% tag %>" =~ $TAG_QUOTE_REGEX ]]
 	[[ ! '<%"%>'     =~ $TAG_QUOTE_REGEX ]]
 	[[ ! '<%" " %>'  =~ $TAG_QUOTE_REGEX ]]
+	[[ ! '<%"""%>'   =~ $TAG_QUOTE_REGEX ]] # Caveat to make the regex work
+	[[ ! '<%" ""%>'  =~ $TAG_QUOTE_REGEX ]] # Caveat to make the regex work
+	[[ ! '<%"""""%>' =~ $TAG_QUOTE_REGEX ]] # Caveat to make the regex work
 
 	#
 	# Custom Delims
@@ -737,8 +826,6 @@ setup() {
 	[[ '<%" tag"%>'  =~ $TAG_QUOTE_REGEX ]]
 	[[ '<%"tag "%>'  =~ $TAG_QUOTE_REGEX ]]
 	[[ '<%" tag "%>' =~ $TAG_QUOTE_REGEX ]]
-	[[ '<%"""%>'     =~ $TAG_QUOTE_REGEX ]]
-	[[ '<%" ""%>'    =~ $TAG_QUOTE_REGEX ]]
 	[[ '<%"" "%>'    =~ $TAG_QUOTE_REGEX ]]
 	[[ '<%" " "%>'   =~ $TAG_QUOTE_REGEX ]]
 	[[ '<%""""%>'    =~ $TAG_QUOTE_REGEX ]]
@@ -757,11 +844,113 @@ setup() {
 	[[ '{{" tag"}}'    =~ $TAG_QUOTE_REGEX ]]
 	[[ '{{"tag "}}'    =~ $TAG_QUOTE_REGEX ]]
 	[[ '{{" tag "}}>'  =~ $TAG_QUOTE_REGEX ]]
-	[[ '{{"""}}'       =~ $TAG_QUOTE_REGEX ]]
-	[[ '{{" ""}}'      =~ $TAG_QUOTE_REGEX ]]
 	[[ '{{"" "}}'      =~ $TAG_QUOTE_REGEX ]]
 	[[ '{{" " "}}'     =~ $TAG_QUOTE_REGEX ]]
-	[[ '{{"""""}}'     =~ $TAG_QUOTE_REGEX ]]
+	[[ '{{""""}}'      =~ $TAG_QUOTE_REGEX ]]
+}
+
+@test "TAG_QUOTE_REGEX: should only match 1st tag if multiple tags present" {
+	#
+	# Default Delims
+	#
+
+	reset_delims
+	reset_template_regexes
+
+	[[ '<%"."%>.'  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'     ]]
+	[[ "${BASH_REMATCH[6]}" == '.'     ]]
+
+	[[ '<%"."%><'  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'     ]]
+	[[ "${BASH_REMATCH[6]}" == '<'     ]]
+
+	[[ '<%"."%><%'  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'      ]]
+	[[ "${BASH_REMATCH[6]}" == '<%'     ]]
+
+	[[ '<%"."%><%"'  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'       ]]
+	[[ "${BASH_REMATCH[6]}" == '<%"'     ]]
+
+	[[ '<%"."%>>'  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'     ]]
+	[[ "${BASH_REMATCH[6]}" == '>'     ]]
+
+	[[ '<%"."%>%>'  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'      ]]
+	[[ "${BASH_REMATCH[6]}" == '%>'     ]]
+
+	[[ '<%"."%>"'  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'     ]]
+	[[ "${BASH_REMATCH[6]}" == '"'     ]]
+
+	[[ '<%"."%>"%'  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'      ]]
+	[[ "${BASH_REMATCH[6]}" == '"%'     ]]
+
+	[[ '<%"."%>"%>'  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'       ]]
+	[[ "${BASH_REMATCH[6]}" == '"%>'     ]]
+
+	[[ '<%"."%><%"."%>'  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'           ]]
+	[[ "${BASH_REMATCH[6]}" == '<%"."%>'     ]]
+
+	[[ '<%"."%>.<%"."%>'  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'            ]]
+	[[ "${BASH_REMATCH[6]}" == '.<%"."%>'     ]]
+
+	#
+	# Custom Delims
+	#
+
+	parse_tag_delims "{{ }}"
+	reset_template_regexes
+
+	[[ '{{"."}}.'  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'     ]]
+	[[ "${BASH_REMATCH[6]}" == '.'     ]]
+
+	[[ '{{"."}}{'  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'     ]]
+	[[ "${BASH_REMATCH[6]}" == '{'     ]]
+
+	[[ '{{"."}}{{'  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'      ]]
+	[[ "${BASH_REMATCH[6]}" == '{{'     ]]
+
+	[[ '{{"."}}{{"'  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'       ]]
+	[[ "${BASH_REMATCH[6]}" == '{{"'     ]]
+
+	[[ '{{"."}}}'  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'     ]]
+	[[ "${BASH_REMATCH[6]}" == '}'     ]]
+
+	[[ '{{"."}}}}'  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'      ]]
+	[[ "${BASH_REMATCH[6]}" == '}}'     ]]
+
+	[[ '{{"."}}"'  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'     ]]
+	[[ "${BASH_REMATCH[6]}" == '"'     ]]
+
+	[[ '{{"."}}"}'  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'      ]]
+	[[ "${BASH_REMATCH[6]}" == '"}'     ]]
+
+	[[ '{{"."}}"}}'  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'       ]]
+	[[ "${BASH_REMATCH[6]}" == '"}}'     ]]
+
+	[[ '{{"."}}{{"."}}'  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'           ]]
+	[[ "${BASH_REMATCH[6]}" == '{{"."}}'     ]]
+
+	[[ '{{"."}}.{{"."}}'  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'            ]]
+	[[ "${BASH_REMATCH[6]}" == '.{{"."}}'     ]]
 }
 
 @test "TAG_STATEMENT_REGEX: should fail on invalid statement script tag" {
@@ -828,4 +1017,90 @@ setup() {
 	[[ '<%$$ $%>'    =~ $TAG_STATEMENT_REGEX ]]
 	[[ '<%$$ $ %>'   =~ $TAG_STATEMENT_REGEX ]]
 	[[ '<%$$$%>'     =~ $TAG_STATEMENT_REGEX ]]
+}
+
+@test "TAG_STATEMENT_REGEX: should only match 1st tag if multiple tags present" {
+	#
+	# Default Delims
+	#
+
+	reset_delims
+	reset_template_regexes
+
+	[[ '<%%.%>.'  =~ $TAG_STATEMENT_REGEX ]]
+	declare -p BASH_REMATCH
+	[[ "${BASH_REMATCH[1]}" == '.'     ]]
+	[[ "${BASH_REMATCH[5]}" == '.'     ]]
+
+	[[ '<%%.%><'  =~ $TAG_STATEMENT_REGEX ]]
+	declare -p BASH_REMATCH
+	[[ "${BASH_REMATCH[1]}" == '.'     ]]
+	[[ "${BASH_REMATCH[5]}" == '<'     ]]
+
+	[[ '<%%.%><%'  =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'      ]]
+	[[ "${BASH_REMATCH[5]}" == '<%'     ]]
+
+	[[ '<%%.%><%%'  =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'       ]]
+	[[ "${BASH_REMATCH[5]}" == '<%%'     ]]
+
+	[[ '<%%.%>>'  =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'     ]]
+	[[ "${BASH_REMATCH[5]}" == '>'     ]]
+
+	[[ '<%%.%>%>'  =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'      ]]
+	[[ "${BASH_REMATCH[5]}" == '%>'     ]]
+
+	[[ '<%%.%>"%'  =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'      ]]
+	[[ "${BASH_REMATCH[5]}" == '"%'     ]]
+
+	[[ '<%%.%><%%.%>'  =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'           ]]
+	[[ "${BASH_REMATCH[5]}" == '<%%.%>'     ]]
+
+	[[ '<%%.%>.<%%.%>'  =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'            ]]
+	[[ "${BASH_REMATCH[5]}" == '.<%%.%>'     ]]
+
+	#
+	# Custom Delims
+	#
+
+	parse_tag_delims "{{ }}"
+	reset_template_regexes
+
+	[[ '{{%.}}.'  =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'     ]]
+	[[ "${BASH_REMATCH[5]}" == '.'     ]]
+
+	[[ '{{%.}}{'  =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'     ]]
+	[[ "${BASH_REMATCH[5]}" == '{'     ]]
+
+	[[ '{{%.}}{{'  =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'      ]]
+	[[ "${BASH_REMATCH[5]}" == '{{'     ]]
+
+	[[ '{{%.}}{{%'  =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'       ]]
+	[[ "${BASH_REMATCH[5]}" == '{{%'     ]]
+
+	[[ '{{%.}}}'  =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'     ]]
+	[[ "${BASH_REMATCH[5]}" == '}'     ]]
+
+	[[ '{{%.}}}}'  =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'      ]]
+	[[ "${BASH_REMATCH[5]}" == '}}'     ]]
+
+	[[ '{{%.}}{{%.}}'  =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'           ]]
+	[[ "${BASH_REMATCH[5]}" == '{{%.}}'     ]]
+
+	[[ '{{%.}}.{{%.}}'  =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.'            ]]
+	[[ "${BASH_REMATCH[5]}" == '.{{%.}}'     ]]
 }

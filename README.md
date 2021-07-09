@@ -169,9 +169,9 @@ $ NAME=TekWizely source <( bash-tpl test.tpl )
 Hello ' <% TekWizely %> '
 ```
 
-#### Script Tag
+#### Statement Tag
 
-Script tags allow you to inline more-complicated script statements, ie:
+Statement tags allow you to inline more-complicated script statements, ie:
 
 ```
 Hello <%% echo $NAME %>
@@ -185,17 +185,18 @@ printf "%s\n" Hello\ "$(echo $NAME)"  # Trivial example to demonstrate the conve
 
 **Delimiters:**
 
-The delimiters for script tags are `<%%` &amp; `%>`
+The delimiters for statement tags are `<%%` &amp; `%>`
 
-More specifically, the delimiters are : Standard delimiters with open delimiter followed by a [Script Line Delimiter](#script-lines).
+More specifically, the delimiters are : Standard delimiters with the open delimiter followed by the statement tag delimiter.
 
-NOTE: No whitespace is allowed between the standard tag and the script line delimiter (ie. `<% %` would **not** be treated as a script tag).
-
-NOTE: The script line delimiter is *not* part of the close tag (`%>`), **just** the open tag (`<%%`)
+**NOTES:**
+* The statement tag delimiter (ie the 2nd `%`) can be configured separate from the standard tag delimiters. See [Customizing Delimiters](#customizing-delimiters) for details.
+* No whitespace is allowed between the standard tag and the statement tag delimiter (ie. `<% %` would **not** be treated as a statement tag).
+* The statement tag delimiter is *not* part of the close tag (`%>`), **just** the open tag (`<%%`)
 
 ##### Example
 
-A *slightly* more useful example of a script tag might be:
+A *slightly* more useful example of a statement tag might be:
 
 _test.tpl_
 ```
@@ -213,7 +214,7 @@ Hello TEKWIZELY
 **NOTE:** As with standard tags, the value within the statement tag is 'trimmed' before being processed, ie: `'<%% echo $NAME %>'` is equivalent to `'<%%echo $NAME%>'`.
 
 ----------------
-### Script Lines
+### Statement Lines
 
 _test.tpl_
 ```
@@ -236,7 +237,7 @@ Hello TekWizely
 ```
 
 -----------------
-### Script Blocks
+### Statement Blocks
 
 ```
 %

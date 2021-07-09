@@ -22,17 +22,23 @@ setup() {
 }
 
 @test "parse_tag_delims: Should error on invalid input" {
-	# No middle-space
+	# Empty
 	#
-	run parse_tag_delims '{{}}' 'BATS'
+	run parse_tag_delims '' 'BATS'
 	[[ $status -eq 1 ]]
-	[[ "$output" == "Error: Invalid or missing tag delimiter values for BATS: '{{}}'" ]]
+	[[ "$output" == "Error: Invalid or missing tag delimiter values for BATS: ''" ]]
 
 	# All Spaces
 	#
 	run parse_tag_delims '     ' 'BATS'
 	[[ $status -eq 1 ]]
 	[[ "$output" == "Error: Invalid or missing tag delimiter values for BATS: '     '" ]]
+
+	# No middle-space
+	#
+	run parse_tag_delims '{{}}' 'BATS'
+	[[ $status -eq 1 ]]
+	[[ "$output" == "Error: Invalid or missing tag delimiter values for BATS: '{{}}'" ]]
 }
 
 @test "parse_tag_delims: Should process valid input" {
@@ -58,17 +64,23 @@ setup() {
 }
 
 @test "parse_tag_stmt_delim: Should error on invalid input" {
-	# Too long
+	# Empty
 	#
-	run parse_tag_stmt_delim '%%' 'BATS'
+	run parse_tag_stmt_delim '' 'BATS'
 	[[ $status -eq 1 ]]
-	[[ "$output" == "Error: Invalid or missing tag stmt delimiter value for BATS: '%%'" ]]
+	[[ "$output" == "Error: Invalid or missing tag stmt delimiter value for BATS: ''" ]]
 
 	# Space
 	#
 	run parse_tag_stmt_delim ' ' 'BATS'
 	[[ $status -eq 1 ]]
 	[[ "$output" == "Error: Invalid or missing tag stmt delimiter value for BATS: ' '" ]]
+
+	# Too long
+	#
+	run parse_tag_stmt_delim '%%' 'BATS'
+	[[ $status -eq 1 ]]
+	[[ "$output" == "Error: Invalid or missing tag stmt delimiter value for BATS: '%%'" ]]
 }
 
 @test "parse_tag_stmt_delim: Should process valid input" {
@@ -112,6 +124,18 @@ setup() {
 }
 
 @test "parse_stmt_block_delims: Should error on invalid input" {
+	# Empty
+	#
+	run parse_stmt_block_delims '' 'BATS'
+	[[ $status -eq 1 ]]
+	[[ "$output" == "Error: Invalid or missing stmt-block delimiter values for BATS: ''" ]]
+
+	# All Spaces
+	#
+	run parse_stmt_block_delims '     ' 'BATS'
+	[[ $status -eq 1 ]]
+	[[ "$output" == "Error: Invalid or missing stmt-block delimiter values for BATS: '     '" ]]
+
 	# No middle-space
 	#
 	run parse_stmt_block_delims '<%%>' 'BATS'
