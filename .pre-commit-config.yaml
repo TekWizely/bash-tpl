@@ -40,13 +40,23 @@ repos:
         files: "^bash-tpl$"
         types: [file]
         args: [ '-i', '0', '-ci', '-sr', '-kp', '-w' ]
-      # bats full test suite
+      # bats standard test suite
       #
       - id: bats
-        name: Run full test suite (bats)
+        name: Run standard test suite (bats)
         entry: bats
         language: system
         stages: [commit]
         alias: test
         pass_filenames: false
         args: [ test ]
+      # bats tpl test suite
+      #
+      - id: bats-tpl
+        name: Run tpl test suite (bats)
+        entry: bats
+        language: system
+        stages: [commit]
+        alias: test-tpl
+        pass_filenames: false
+        args: [ test/tpl ]

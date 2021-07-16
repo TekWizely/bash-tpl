@@ -575,7 +575,7 @@ function process_directive() {
 			if [[ "${3}" =~ $DELIM_DIR_CMT_REGEX || "${3}" =~ $DELIM_DIR_COMMENT_REGEX ]]; then
 				parse_comment_delim "${BASH_REMATCH[1]}" 'DELIMS CMT directive'
 			fi
-			# Reset regexes
+			# Apply changes
 			#
 			reset_template_regexes
 			;;
@@ -589,7 +589,7 @@ function process_directive() {
 	esac
 }
 
-function process_file() {
+function process_stdin() {
 	# local lineno
 	# lineno=0 # 1 on first use
 	while IFS="" read -r LINE || [ -n "${LINE}" ]; do
@@ -603,7 +603,7 @@ function process_file() {
 		# echo "#PRINT_INDENTS    : $(declare -p PRINT_INDENTS)"
 		# echo -e "#>> ----------------\n"
 		state_"${STATE}" "${LINE}"
-	done < "${1}"
+	done
 }
 
 #######################################################################
@@ -966,7 +966,9 @@ function usage() {
 	cat << USAGE
 Bash-TPL is a smart, lightweight shell script templating engine
 
-usage: bash-tpl [flags] file
+usage: bash-tpl [flags] [--] file
+       bash-tpl [flags] -
+       cat file | bash-tpl [flags]
 
 options:
   -h, --help
@@ -975,6 +977,8 @@ options:
         show version
   -o, --output-file <filename>
         write to specified file (default: stdout)
+   --   treat reamining options as positional arguments
+   -    read from stdin
 
 customize delimiters:
   --tag-delims 'xx xx'
@@ -1017,6 +1021,35 @@ USAGE
 }
 
 ##
+# parse_env_delims - Set Delims from Environment Vars
+#
+function parse_env_delims() {
+	if [ -n "${BASH_TPL_TAG_DELIMS}" ]; then
+		parse_tag_delims "${BASH_TPL_TAG_DELIMS}" "BASH_TPL_TAG_DELIMS"
+	fi
+
+	if [ -n "${BASH_TPL_TAG_STMT_DELIM}" ]; then
+		parse_tag_stmt_delim "${BASH_TPL_TAG_STMT_DELIM}" "BASH_TPL_TAG_STMT_DELIM"
+	fi
+
+	if [ -n "${BASH_TPL_STMT_DELIM}" ]; then
+		parse_stmt_delim "${BASH_TPL_STMT_DELIM}" "BASH_TPL_STMT_DELIM"
+	fi
+
+	if [ -n "${BASH_TPL_STMT_BLOCK_DELIMS}" ]; then
+		parse_stmt_block_delims "${BASH_TPL_STMT_BLOCK_DELIMS}" "BASH_TPL_STMT_BLOCK_DELIMS"
+	fi
+
+	if [ -n "${BASH_TPL_DIR_DELIM}" ]; then
+		parse_directive_delim "${BASH_TPL_DIR_DELIM}" "BASH_TPL_DIR_DELIM"
+	fi
+
+	if [ -n "${BASH_TPL_CMT_DELIM}" ]; then
+		parse_comment_delim "${BASH_TPL_CMT_DELIM}" "BASH_TPL_CMT_DELIM"
+	fi
+}
+
+##
 # parse_args
 # $1 = remaining arg varname
 # $2+ args to parse
@@ -1024,7 +1057,7 @@ USAGE
 function parse_args() {
 	local -n __local_parse_args=$1 # nameref
 	shift
-	while (("$#")); do
+	while (($#)); do
 		case "$1" in
 			-h | --help)
 				usage
@@ -1081,8 +1114,19 @@ function parse_args() {
 				BASE_TEXT_INDENT="${2}"
 				shift 2
 				;;
-			--* | -*=) # unsupported flags
-				echo "Error: Unknown flag $1" >&2
+			-)
+				__local_parse_args+=("$1")
+				shift
+				;;
+			--)
+				shift
+				while (($#)); do
+					__local_parse_args+=("$1")
+					shift
+				done
+				;;
+			--* | -*) # unsupported flags
+				echo "Error: unknown flag: '$1'; use -h for help" >&2
 				exit 1
 				;;
 			*) # preserve positional arguments
@@ -1093,65 +1137,57 @@ function parse_args() {
 	done
 }
 
-##
-# parse_env_delims - Set Delims from Environment Vars
-#
-function parse_env_delims() {
-	if [ -n "${BASH_TPL_TAG_DELIMS}" ]; then
-		parse_tag_delims "${BASH_TPL_TAG_DELIMS}" "BASH_TPL_TAG_DELIMS"
+function main() {
+
+	OUPUT_FILE=""
+
+	BASE_STMT_INDENT=""
+	BASE_TEXT_INDENT=""
+
+	reset_delims
+	parse_env_delims
+
+	args=()
+	parse_args args "$@"
+	set -- "${args[@]}"
+
+	# No file argument
+	#
+	if [[ -z "${1}" ]]; then
+		# Nothing waiting on stdin
+		#
+		if [[ -t 0 ]]; then
+			usage
+			exit 1
+		fi
+	else
+		# File argument is explicitly stdin
+		#
+		if [[ "${1}" == '-' ]]; then
+			shift
+		else
+			# File argument points to non existing/readable file
+			#
+			if [[ ! -r "${1}" ]]; then
+				echo "File not found: '${1}'" >&2
+				exit 1
+			fi
+			# File argument is good, re-route it to stdin
+			#
+			exec < "${1}"
+			shift
+		fi
 	fi
 
-	if [ -n "${BASH_TPL_TAG_STMT_DELIM}" ]; then
-		parse_tag_stmt_delim "${BASH_TPL_TAG_STMT_DELIM}" "BASH_TPL_TAG_STMT_DELIM"
+	reset_template_regexes
+
+	if [[ -n "${OUPUT_FILE}" ]]; then
+		exec > "${OUPUT_FILE}"
 	fi
 
-	if [ -n "${BASH_TPL_STMT_DELIM}" ]; then
-		parse_stmt_delim "${BASH_TPL_STMT_DELIM}" "BASH_TPL_STMT_DELIM"
-	fi
-
-	if [ -n "${BASH_TPL_STMT_BLOCK_DELIMS}" ]; then
-		parse_stmt_block_delims "${BASH_TPL_STMT_BLOCK_DELIMS}" "BASH_TPL_STMT_BLOCK_DELIMS"
-	fi
-
-	if [ -n "${BASH_TPL_DIR_DELIM}" ]; then
-		parse_directive_delim "${BASH_TPL_DIR_DELIM}" "BASH_TPL_DIR_DELIM"
-	fi
-
-	if [ -n "${BASH_TPL_CMT_DELIM}" ]; then
-		parse_comment_delim "${BASH_TPL_CMT_DELIM}" "BASH_TPL_CMT_DELIM"
-	fi
+	process_stdin
 }
 
 # Only process main logic if not being sourced (ie tested)
 #
-(return 0 2> /dev/null) && return 0
-
-OUPUT_FILE=""
-
-BASE_STMT_INDENT=""
-BASE_TEXT_INDENT=""
-
-reset_delims
-parse_env_delims
-
-args=()
-parse_args args "$@"
-set -- "${args[@]}"
-
-if [[ -z "${1}" ]]; then
-	usage
-	exit 1
-fi
-
-if [[ ! -r "${1}" ]]; then
-	echo "File not found: '${1}'" >&2
-	exit 1
-fi
-
-reset_template_regexes
-
-if [[ -n "${OUPUT_FILE}" ]]; then
-	exec >> "${OUPUT_FILE}"
-fi
-
-process_file "${1}"
+(return 0 2> /dev/null) || main "$@"
