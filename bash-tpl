@@ -38,6 +38,64 @@ VERSION="v0.3.0-SNAPSTHOT"
 #   https://github.com/TekWizely/bash-tpl
 #######################################################################
 
+function usage() {
+	cat << USAGE
+Bash-TPL is a smart, lightweight shell script templating engine
+
+usage: bash-tpl [flags] [--] file
+       bash-tpl [flags] -
+       cat file | bash-tpl [flags]
+
+options:
+  -h, --help
+        show help screen
+  --version
+        show version
+  -o, --output-file <filename>
+        write to specified file (default: stdout)
+   --   treat reamining options as positional arguments
+   -    read from stdin
+
+customize delimiters:
+  --tag-delims 'xx xx'
+        set tag delimiters (default: '<% %>')
+  --tag-stmt-delim 'x'
+        set tag statement delimiter (default: '%')
+  --stmt-delim 'x+'
+        set statement delimiter (default: '%')
+  --stmt-block-delims 'x+ x+'
+        set statement block delimiters
+        defaults to statement delimiter if not explicitly set
+  --dir-delim
+  --directive-delim 'x+'
+        set directive delimiter (default: '.')
+  --cmt-delim
+  --comment-delim 'x+'
+        set template comment delimiter
+        defaults to directive delimiter + '#' if not explicitly set
+  --reset-delims
+        reset all delimiters to defaults
+        delim options provided after this option are honored
+
+supported environment variables:
+    BASH_TPL_TAG_DELIMS
+    BASH_TPL_TAG_STMT_DELIM
+    BASH_TPL_STMT_DELIM
+    BASH_TPL_STMT_BLOCK_DELIMS
+    BASH_TPL_DIR_DELIM
+    BASH_TPL_CMT_DELIM
+
+example:
+    $ echo 'Hello <% \$NAME %>' > test.tpl
+    $ NAME="Chuck Norris" source <( bash-tpl test.tpl )
+
+    Hello Chuck Norris
+
+learn more: https://github.com/TekWizely/bash-tpl
+
+USAGE
+}
+
 #######################################################################
 # Delim Functions
 #######################################################################
@@ -960,64 +1018,6 @@ function state_STMT_BLOCK() {
 
 function version() {
 	printf "%s\n" "${VERSION}"
-}
-
-function usage() {
-	cat << USAGE
-Bash-TPL is a smart, lightweight shell script templating engine
-
-usage: bash-tpl [flags] [--] file
-       bash-tpl [flags] -
-       cat file | bash-tpl [flags]
-
-options:
-  -h, --help
-        show help screen
-  --version
-        show version
-  -o, --output-file <filename>
-        write to specified file (default: stdout)
-   --   treat reamining options as positional arguments
-   -    read from stdin
-
-customize delimiters:
-  --tag-delims 'xx xx'
-        set tag delimiters (default: '<% %>')
-  --tag-stmt-delim 'x'
-        set tag statement delimiter (default: '%')
-  --stmt-delim 'x+'
-        set statement delimiter (default: '%')
-  --stmt-block-delims 'x+ x+'
-        set statement block delimiters
-        defaults to statement delimiter if not explicitly set
-  --dir-delim
-  --directive-delim 'x+'
-        set directive delimiter (default: '.')
-  --cmt-delim
-  --comment-delim 'x+'
-        set template comment delimiter
-        defaults to directive delimiter + '#' if not explicitly set
-  --reset-delims
-        reset all delimiters to defaults
-        delim options provided after this option are honored
-
-supported environment variables:
-    BASH_TPL_TAG_DELIMS
-    BASH_TPL_TAG_STMT_DELIM
-    BASH_TPL_STMT_DELIM
-    BASH_TPL_STMT_BLOCK_DELIMS
-    BASH_TPL_DIR_DELIM
-    BASH_TPL_CMT_DELIM
-
-example:
-    $ echo 'Hello <% \$NAME %>' > test.tpl
-    $ NAME="Chuck Norris" source <( bash-tpl test.tpl )
-
-    Hello Chuck Norris
-
-learn more: https://github.com/TekWizely/bash-tpl
-
-USAGE
 }
 
 ##

@@ -24,7 +24,6 @@ This results in both templates that are easily readable and maintainable, and ge
 
 The key to success with Bash-TPL's indentation fix-up logic is _Consistent Formatting_ - using consistent indentation throughout your template will yield best results.
 
-
 ##### Non-Bash-Specific
 
 The shell scripts that Bash-TPL generates are not intended to be Bash-specific.
@@ -36,7 +35,6 @@ printf "%s\n" Plain\ text\,\ "$VARIABLE"\,\ "$(echo subshell)"
 ```
 
 #### TOC
-
 - [Template Tags](#template-tags)
   - [Text Tags](#text-tags)
   - [Statement Lines](#statement-lines)
@@ -65,9 +63,45 @@ _basic usage_
 $ bash-tpl my_template.tpl > my_script.sh
 ```
 
+#### Reading From STDIN
+
+In addition to files, bash-tpl can also read directly from `stdin`.
+
+To read from `stdin`, use a single `-` as the input filename:
+
+_stdin example_
+```
+$ bash-tpl - > hello.sh
+Hello, world
+^D
+```
+
+##### Other stdin sources
+
+You can also use other common `stdin` sources:
+
+_pipe example_
+```
+$ echo "Hello, world" | bash-tpl - > hello.sh
+```
+
+_herestring (`<<<`) example_
+```
+$ bash-tpl - <<< "Hello, world" > hello.sh
+```
+
+_heredoc (`<<`) example_
+```
+$ bash-tpl - > hello.sh <<EOF
+Hello, world
+EOF
+```
+
+**NOTE:** Use of `-` is optional for pipes and herestrings/docs. bash-tpl will try to auto-detect when they are being used.  But if you have any issues, an explicit `-` should help.
+
 #### Specifying Output File
 
-You can sepecify the output file using the `-o` or `--output-file` options:
+You can specify the output file using the `-o` or `--output-file` options:
 
 ```
 $ bash-tpl --output-file my_script.sh my_template.tpl
@@ -421,7 +455,7 @@ Hello, TekWizely
 
 #### Command Line Options
 
-The following command line options are available:
+The following command line options are available for customizing delimiters:
 
 | OPTION              | FORMAT    | NOTE |
 |---------------------|-----------|------|
