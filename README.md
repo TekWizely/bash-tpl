@@ -14,7 +14,15 @@ Bash-TPL is presented as a single-file Bash script, making it both easy to bring
 
 See [Adding `bash-tpl` into your project](#adding-bash-tpl-into-your-project) for more information.
 
-##### Smart
+##### Generates Reusable Scripts
+
+Although its easy to bring the main Bash-TPL script along in your projects, you may not need to in all cases.
+
+The output of Bash-TPL is a reusable shell script that is then used to generate your final text document.
+
+If desired, you could just bring/ship the intermediate script, with no further need for Bash-TPL until you need to make changes to your original template.
+
+##### Smart Indentation Correction
 
 Bash-TPL encourages you to use extra indentation to write clean, well-formatted templates, and smartly removes the indentations from the generated template scripts.
 
@@ -33,6 +41,14 @@ Any shell that can process the following statement should be compatible:
 ```
 printf "%s\n" Plain\ text\,\ "$VARIABLE"\,\ "$(echo subshell)"
 ```
+
+##### Configurable Delimiters
+
+Bash-TPL's default delimiters _should_ accommodate most text file formats without conflict.
+
+But if you do run into conflicts, or if you just prefer a different style, the delimiters are fully configurable.
+
+
 
 #### TOC
 - [Template Tags](#template-tags)
@@ -541,6 +557,17 @@ $ brew tap tekwizely/tap
 
 $ brew install bash-tpl
 ```
+## Similar Tools
+
+Here's a list of some similar tools I discovered before deciding to create bash-tpl :
+* [mo - mustache templates in bash](https://github.com/tests-always-included/mo)
+* [esh - embedded shell (written in sh)](https://github.com/jirutka/esh)
+* [envsubst (part of gnu gettext)](https://www.gnu.org/software/gettext/manual/html_node/envsubst-Invocation.html)
+* [shtpl (written in bash)](https://github.com/mlorenzo-stratio/shtpl)
+* [shtpl (written in vala)](https://github.com/dontsueme/shtpl)
+* [cookie (written in bash)](https://github.com/bbugyi200/cookie)
+* [bash-templater](https://github.com/vicentebolea/bash-templater)
+* [renderest (written in bash)](https://github.com/relaxdiego/renderest)
 
 ---------------
 ## Contributing
