@@ -1,10 +1,10 @@
 # Bash-TPL [![MIT license](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/tekwizely/pre-commit-golang/blob/master/LICENSE)
 
-A Smart, Lightweight shell script templating engine, written in Bash.
+A Smart, lightweight shell script templating engine, written in Bash.
 
-Bash-TPL lets you you mark up textual files (config files, yaml, xml, scripts, html, etc) with shell commands and variable replacements, while minimally impacting your original file layout.
+Bash-TPL lets you mark up textual files (config files, yaml, xml, scripts, html, etc.) with shell commands and variable replacements, while minimally impacting your original file layout.
 
-Templates are compiled into shell scripts that you can invoke (along with variables, arguments, etc) to generate complete and well-formatted output text files.
+Templates are compiled into shell scripts that you can invoke (along with variables, arguments, etc.) to generate complete and well-formatted output text files.
 
 #### Features
 
@@ -14,25 +14,23 @@ Bash-TPL is presented as a single-file Bash script, making it both easy to bring
 
 See [Adding `bash-tpl` into your project](#adding-bash-tpl-into-your-project) for more information.
 
-##### Generates Reusable Scripts
-
-Although its easy to bring the main Bash-TPL script along in your projects, you may not need to in all cases.
-
-The output of Bash-TPL is a reusable shell script that is then used to generate your final text document.
-
-If desired, you could just bring/ship the intermediate script, with no further need for Bash-TPL until you need to make changes to your original template.
-
 ##### Smart Indentation Correction
 
-Bash-TPL encourages you to use extra indentation to write clean, well-formatted templates, and smartly removes the indentations from the generated template scripts.
+Creating readable, maintainable templates often requires adding extra whitespace (i.e. indenting lines within a `for` loop) in order to help distinguish your template tags from your textual content.
 
-This results in both templates that are easily readable and maintainable, and generated text files that look as good as if they were written by hand.
+Bash-TPL detects ands removes these extra indentations, resulting in generated text files that look as good as if they were written by hand !
 
 *NOTE: Consistent Formatting*
 
-The key to success with Bash-TPL's indentation fix-up logic is _Consistent Formatting_ - using consistent indentation throughout your template will yield best results.
+The key to success with Bash-TPL's indentation fix-up logic is _Consistent Formatting_ - using consistent indentation throughout your templates will yield best results.
 
-##### Non-Bash-Specific
+##### Generates Reusable Shell Scripts
+
+The output of Bash-TPL is a reusable shell script that is then used to generate your final text document(s).
+
+If desired, you could just bring/ship the intermediate script, with no further need for Bash-TPL until you need to make changes to your original template.
+
+##### Shell Agnostic
 
 The shell scripts that Bash-TPL generates are not intended to be Bash-specific.
 
@@ -42,13 +40,33 @@ Any shell that can process the following statement should be compatible:
 printf "%s\n" Plain\ text\,\ "$VARIABLE"\,\ "$(echo subshell)"
 ```
 
+##### Supports Includes
+
+Templates can include other templates, making it easy to organize your templates as smaller, reusable components.
+
+*NOTE:* Bash-TPL's smart indentation tracking &amp; correction even works across included templates !
+
+The indentation of the `include` statement dictates the base indentation of the included file.
+
+See [INCLUDE directive](#include) for more information.
+
 ##### Configurable Delimiters
 
 Bash-TPL's default delimiters _should_ accommodate most text file formats without conflict.
 
 But if you do run into conflicts, or if you just prefer a different style, the delimiters are fully configurable.
 
+You can even modify delimiters mid-template !
 
+See  [Customizing Delimiters](#customizing-delimiters) for more information.
+
+*NOTE: Including Templates With Differing Delimiters*
+
+You can easily include templates that have differing delimiters.
+
+If the included template doesn't declare its delimiters explicitly (i.e. maybe it relies on the defaults), you can specify the delimiters as part of the include statement.
+
+See [INCLUDE directive](#include) for more information.
 
 #### TOC
 - [Template Tags](#template-tags)
@@ -263,7 +281,7 @@ Hello TEKWIZELY
 
 **NOTE:** As with standard tags, the value within the statement tag is 'trimmed' before being processed, ie: `'<%% echo $NAME %>'` is equivalent to `'<%%echo $NAME%>'`.
 
-----------------
+-------------------
 ### Statement Lines
 
 _test.tpl_
@@ -286,7 +304,7 @@ $ source <( bash-tpl test.tpl ) TekWizely
 Hello TekWizely
 ```
 
------------------
+--------------------
 ### Statement Blocks
 
 ```
@@ -585,7 +603,7 @@ Alternatively see the GitHub documentation on [creating a pull request](https://
 ----------
 ## Contact
 
-If you want to contact me you can reach me at TekWize.ly@gmail.com.
+If you want to contact me you can reach me at TekWizely@gmail.com.
 
 ----------
 ## License
