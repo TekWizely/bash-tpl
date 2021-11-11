@@ -68,6 +68,14 @@ If the included template doesn't declare its delimiters explicitly (i.e. maybe i
 
 See [INCLUDE directive](#include) for more information.
 
+##### Extensive Test Suite
+
+Bash-TPL has an extensive test suite built wth [BATS](https://github.com/bats-core/bats-core)
+
+*Older Bash Versions*
+
+The test suite has been tested against Bash versions `3.2`, `4.4`, `5.0`, and `5.1`
+
 #### TOC
 - [Template Tags](#template-tags)
   - [Text Tags](#text-tags)
