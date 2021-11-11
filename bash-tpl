@@ -316,11 +316,12 @@ function trim() {
 # usage: escape_regex varname
 #
 function escape_regex() {
-	local -n ref=$1
+	local result
 	# shellcheck disable=SC2001  # Too complex for ${variable//search/replace}
 	# shellcheck disable=SC2016  # Not using expansion, prefer single quotes
 	# shellcheck disable=SC2034  # ref is used
-	ref=$(sed 's/[][\.|$()?+*^]/\\&/g' <<< "${!1}") # Omits: [{}]
+	result=$(sed 's/[][\.|$(){}?+*^]/\\&/g' <<< "${!1}")
+	printf -v "${1}" "%s" "${result}"
 }
 
 ##
@@ -328,9 +329,10 @@ function escape_regex() {
 # usage: normalize_directive varname
 #
 function normalize_directive() {
-	local -n ref=$1
+	local result
 	# shellcheck disable=SC2034  # ref is used
-	ref=$(tr 'a-z_' 'A-Z-' <<< "${!1}")
+	result=$(tr 'a-z_' 'A-Z-' <<< "${!1}")
+	printf -v "${1}" "%s" "${result}"
 }
 
 #######################################################################
@@ -520,7 +522,7 @@ function print_text() {
 # process_tags
 #
 function process_tags() {
-	local line args quoted
+	local line args arg quoted
 	line="${1}"
 	args=""
 	while [ -n "${line}" ]; do
@@ -536,15 +538,17 @@ function process_tags() {
 			line="${BASH_REMATCH[6]}"
 		elif [[ "${line}" =~ $TAG_STATEMENT_REGEX ]]; then
 			# echo "# STMT TAG MATCH: $(declare -p BASH_REMATCH)" >&2
-			trim BASH_REMATCH[1]
-			args="${args}\"\$(${BASH_REMATCH[1]})\""
+			arg="${BASH_REMATCH[1]}"
+			trim arg
+			args="${args}\"\$(${arg})\""
 			line="${BASH_REMATCH[5]}"
 		# Check standard regex last as its a super-set of quote and stmt regex
 		#
 		elif [[ "${line}" =~ $TAG_STD_REGEX ]]; then
 			# echo "# STD TAG MATCH: $(declare -p BASH_REMATCH)" >&2
-			trim BASH_REMATCH[1]
-			args="${args}\"${BASH_REMATCH[1]}\""
+			arg="${BASH_REMATCH[1]}"
+			trim arg
+			args="${args}\"${arg}\""
 			line="${BASH_REMATCH[5]}"
 		# Assume next character is TEXT - extract and process remainder
 		#
@@ -1051,12 +1055,12 @@ function parse_env_delims() {
 
 ##
 # parse_args
-# $1 = remaining arg varname
-# $2+ args to parse
+# $@ args to parse
+#
+# Stores positional args in global array __ARGS[@]
 #
 function parse_args() {
-	local -n __local_parse_args=$1 # nameref
-	shift
+	__ARGS=() # Global
 	while (($#)); do
 		case "$1" in
 			-h | --help)
@@ -1115,13 +1119,13 @@ function parse_args() {
 				shift 2
 				;;
 			-)
-				__local_parse_args+=("$1")
+				__ARGS+=("$1")
 				shift
 				;;
 			--)
 				shift
 				while (($#)); do
-					__local_parse_args+=("$1")
+					__ARGS+=("$1")
 					shift
 				done
 				;;
@@ -1130,7 +1134,7 @@ function parse_args() {
 				exit 1
 				;;
 			*) # preserve positional arguments
-				__local_parse_args+=("$1")
+				__ARGS+=("$1")
 				shift
 				;;
 		esac
@@ -1147,9 +1151,9 @@ function main() {
 	reset_delims
 	parse_env_delims
 
-	args=()
-	parse_args args "$@"
-	set -- "${args[@]}"
+	parse_args "$@"
+	set -- "${__ARGS[@]}"
+	unset __ARGS
 
 	# No file argument
 	#
