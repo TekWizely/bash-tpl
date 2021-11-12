@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        bash: [bash:3.2, bash:4.4, bash:5.0, bash:5.1]
+        bash: ["bash:3.2", "bash:4.4", "bash:5.0", "bash:5.1"]
     container: 
       image: ${{ matrix.bash }}
     steps:
