@@ -1,6 +1,6 @@
+name: BATS Tests
 on:
     workflow_dispatch:
-
 jobs:
     bats:
         runs-on: ubuntu-latest
