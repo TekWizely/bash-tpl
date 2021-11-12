@@ -19,6 +19,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: mig4/setup-bats@v1.2.0
+      
+      - name: Install packages
+        run: apk add diffutils
 
       - name: Run bash-tpl tests
         run: bats test/
