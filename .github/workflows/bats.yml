@@ -1,0 +1,22 @@
+on:
+    workflow_dispatch:
+
+jobs:
+    bats:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                bash: [bash:3.2, bash:4.4, bash:5.0, bash:5.1]
+        container:
+            image: ${{ matrix.bash }}
+        steps:
+            - name: Setup BATS
+              uses: mig4/setup-bats@v1
+              with:
+                  bats-version: 1.5.0
+            - name: Checkout code
+              uses: actions/checkout@v2
+            - name: Run bash-tpl tests
+              run: bats test/
+            - name: Run template tests
+              run: bats test/tpl
