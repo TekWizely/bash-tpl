@@ -365,7 +365,7 @@ function peek_state() {
 #
 function pop_state() {
 	if [[ ${#STATES[@]} -gt 0 ]]; then
-		unset STATES[${#STATES[@]}-1]
+		unset "STATES[${#STATES[@]}-1]"
 	fi
 }
 
@@ -399,7 +399,7 @@ function peek_statement_indent() {
 #
 function pop_statement_indent() {
 	if [[ ${#STATEMENT_INDENTS[@]} -gt 0 ]]; then
-		unset STATEMENT_INDENTS[${#STATEMENT_INDENTS[@]}-1]
+		unset "STATEMENT_INDENTS[${#STATEMENT_INDENTS[@]}-1]"
 	fi
 }
 
@@ -421,7 +421,7 @@ function push_text_indent() {
 #
 function pop_text_indent() {
 	if [[ ${#TEXT_INDENTS[@]} -gt 0 ]]; then
-		unset TEXT_INDENTS[${#TEXT_INDENTS[@]}-1]
+		unset "TEXT_INDENTS[${#TEXT_INDENTS[@]}-1]"
 	fi
 }
 
@@ -443,7 +443,7 @@ function push_print_indent() {
 #
 function pop_print_indent() {
 	if [[ ${#PRINT_INDENTS[@]} -gt 0 ]]; then
-		unset PRINT_INDENTS[${#PRINT_INDENTS[@]}-1]
+		unset "PRINT_INDENTS[${#PRINT_INDENTS[@]}-1]"
 	fi
 }
 
