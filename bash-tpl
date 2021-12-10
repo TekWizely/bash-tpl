@@ -712,7 +712,7 @@ function state_DEFAULT() {
 # We might be starting a text block
 #
 function state_MAYBE_TXT_BLOCK() {
-	# Current line is also a statment
+	# Current line is also a statement
 	#
 	if [[ "${1}" =~ $STATEMENT_REGEX ]]; then
 		peek_statement_indent
@@ -724,7 +724,7 @@ function state_MAYBE_TXT_BLOCK() {
 			push_text_indent "${BASH_REMATCH[1]}"
 			push_print_indent "${STATEMENT_INDENT}"
 			push_state "TXT_BLOCK"
-			# Print curent statement with new indent
+			# Print current statement with new indent
 			#
 			print_statement_indent "${BASH_REMATCH[1]}"
 			print_statement "${BASH_REMATCH[2]}"
@@ -756,7 +756,7 @@ function state_MAYBE_TXT_BLOCK() {
 			push_text_indent "${BASH_REMATCH[1]}"
 			push_print_indent "${STATEMENT_INDENT}"
 			push_state "TXT_BLOCK"
-			# Current statement is STMT Start Block
+			# Current statement is a STMT Start Block
 			#
 			push_statement_indent "${BASH_REMATCH[1]}"
 			STATE="START_STMT_BLOCK"
@@ -857,7 +857,7 @@ function state_MAYBE_TXT_BLOCK() {
 # state_TXT_BLOCK
 #
 function state_TXT_BLOCK() {
-	# Current line is a statment
+	# Current line is a statement
 	#
 	if [[ "${1}" =~ $STATEMENT_REGEX ]]; then
 		peek_statement_indent
