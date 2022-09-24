@@ -25,6 +25,26 @@ setup() {
 	[[ -n "${STMT_BLOCK_DELIM_UNDEFINED}"                ]]
 }
 
+@test "reset_template_regexes: should default text delim to stmt-delim + ' ' if not set" {
+
+	reset_delims
+
+	# Creates valid stmt delim, empty text delim
+	# Sets default flag for text delim
+	#
+	[[ -n "${STMT_DELIM}"           ]]
+	[[ -z "${TEXT_DELIM}"           ]]
+	[[ -n "${TEXT_DELIM_UNDEFINED}" ]]
+
+	reset_template_regexes
+
+	# Defaults text delim to stmt delim + ' '
+	# Leaves default flag set for text delim
+	#
+	[[    "${TEXT_DELIM}" == "${STMT_DELIM} " ]]
+	[[ -n "${TEXT_DELIM_UNDEFINED}"           ]]
+}
+
 @test "reset_template_regexes: should default comment delim to stmt-delim + '#' if not set" {
 
 	reset_delims
@@ -38,7 +58,7 @@ setup() {
 
 	reset_template_regexes
 
-	# Defaults comment delim to stmt delim
+	# Defaults comment delim to stmt delim + '#'
 	# Leaves default flag set for comment delim
 	#
 	[[    "${COMMENT_DELIM}" == "${STMT_DELIM}#" ]]
@@ -54,6 +74,7 @@ setup() {
 	[[ -z "${STATEMENT_REGEX}"             ]]
 	[[ -z "${STATEMENT_BLOCK_START_REGEX}" ]]
 	[[ -z "${STATEMENT_BLOCK_STOP_REGEX}"  ]]
+	[[ -z "${STATEMENT_BLOCK_TEXT_REGEX}"  ]]
 	[[ -z "${TEXT_REGEX}"                  ]]
 	[[ -z "${TAG_TEXT_REGEX}"              ]]
 	[[ -z "${TAG_STD_REGEX}"               ]]
@@ -69,6 +90,7 @@ setup() {
 	[[ -n "${STATEMENT_REGEX}"             ]]
 	[[ -n "${STATEMENT_BLOCK_START_REGEX}" ]]
 	[[ -n "${STATEMENT_BLOCK_STOP_REGEX}"  ]]
+	[[ -n "${STATEMENT_BLOCK_TEXT_REGEX}"  ]]
 	[[ -n "${TEXT_REGEX}"                  ]]
 	[[ -n "${TAG_TEXT_REGEX}"              ]]
 	[[ -n "${TAG_STD_REGEX}"               ]]
@@ -422,6 +444,68 @@ setup() {
 	[[ "    %> " =~ $STATEMENT_BLOCK_STOP_REGEX ]]
 	[[ "${BASH_REMATCH[1]}" == '    '           ]]
 
+}
+
+@test "STATEMENT_BLOCK_TEXT_REGEX: should fail on invalid text line" {
+	#
+	# Default delim
+	#
+
+	reset_delims
+	reset_template_regexes
+
+	[[ ! ""        =~ $STATEMENT_BLOCK_TEXT_REGEX ]]
+	[[ ! "text"    =~ $STATEMENT_BLOCK_TEXT_REGEX ]]
+	[[ ! ".% text" =~ $STATEMENT_BLOCK_TEXT_REGEX ]]
+
+	#
+	# Custom delim
+	#
+
+	parse_text_delim '>>'
+	reset_template_regexes
+
+	[[ ! "% text" =~ $STATEMENT_BLOCK_TEXT_REGEX ]]
+}
+
+@test "STATEMENT_BLOCK_TEXT_REGEX: should match on valid text line" {
+	#
+	# Default delim
+	#
+
+	reset_delims
+	reset_template_regexes
+
+	[[ "%  Text"     =~ $STATEMENT_BLOCK_TEXT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == ''                   ]]
+
+	[[ "    %  Text" =~ $STATEMENT_BLOCK_TEXT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '    '               ]]
+
+	[[ "% Text"      =~ $STATEMENT_BLOCK_TEXT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == ''                   ]]
+
+	[[ "    % Text"  =~ $STATEMENT_BLOCK_TEXT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '    '               ]]
+
+	#
+	# Custom delim
+	#
+
+	parse_text_delim '>>'
+	reset_template_regexes
+
+	[[ ">> Text"     =~ $STATEMENT_BLOCK_TEXT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == ''                   ]]
+
+	[[ "    >> Text" =~ $STATEMENT_BLOCK_TEXT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '    '               ]]
+
+	[[ ">>Text"      =~ $STATEMENT_BLOCK_TEXT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == ''                   ]]
+
+	[[ "    >>Text"  =~ $STATEMENT_BLOCK_TEXT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '    '               ]]
 }
 
 @test "TEXT_REGEX: should match ALL input" {

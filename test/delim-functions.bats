@@ -16,6 +16,8 @@ setup() {
 	[[ "${STMT_BLOCK_DELIM_UNDEFINED}" == '1' ]]
 	[[ "${STMT_BLOCK_START_DELIM}"     == ''  ]]
 	[[ "${STMT_BLOCK_STOP_DELIM}"      == ''  ]]
+	[[ "${TEXT_DELIM_UNDEFINED}"       == '1' ]]
+	[[ "${TEXT_DELIM}"                 == ''  ]]
 	[[ "${DIRECTIVE_DELIM}"            == '.' ]]
 	[[ "${COMMENT_DELIM_UNDEFINED}"    == '1' ]]
 	[[ "${COMMENT_DELIM}"              == ''  ]]
@@ -178,6 +180,40 @@ setup() {
 	run parse_directive_delim ' ' 'BATS'
 	[[ $status -eq 1 ]]
 	[[ "$output" == "Error: Invalid or missing directive delimiter value for BATS: ' '" ]]
+}
+
+@test "parse_text_delim: Should error on invalid input" {
+	# Empty
+	#
+	run parse_text_delim '' 'BATS'
+	[[ $status -eq 1 ]]
+	[[ "$output" == "Error: Invalid or missing text delimiter value for BATS: ''" ]]
+
+	# Space
+	#
+	run parse_text_delim ' ' 'BATS'
+	[[ $status -eq 1 ]]
+	[[ "$output" == "Error: Invalid or missing text delimiter value for BATS: ' '" ]]
+}
+
+@test "parse_text_delim: Should process valid input" {
+
+	[[ -z "${TEXT_DELIM}" ]]
+	[[ -z "${TEXT_DELIM_UNDEFINED}" ]]
+
+	TEXT_DELIM_UNDEFINED=1
+	[[ -n "${TEXT_DELIM_UNDEFINED}" ]]
+	parse_text_delim '% '
+
+	[[    "${TEXT_DELIM}" == '% '    ]]
+	[[ -z "${TEXT_DELIM_UNDEFINED}" ]]
+
+	TEXT_DELIM_UNDEFINED=1
+	[[ -n "${TEXT_DELIM_UNDEFINED}" ]]
+	parse_text_delim '>>'
+
+	[[    "${TEXT_DELIM}" == '>>'   ]]
+	[[ -z "${TEXT_DELIM_UNDEFINED}" ]]
 }
 
 @test "parse_directive_delim: Should process valid input" {
