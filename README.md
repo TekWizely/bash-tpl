@@ -173,42 +173,48 @@ Text tags allow you to seamlessly inject dynamic data elements inline with your 
 
 They allow you to maintain your template as nicely-formatted text instead of complicated print statements, ie:
 
+#### Standard Tag
+
+Here is a simple template example using the standard text tag:
+
+_hello.tpl_
 ```
 Hello <% $NAME %>
 ```
 
-Is equivalent to :
+#### Processing The Template
 
+We can process the template and review the generated script:
+
+_process the template_
 ```
+$ bash-tpl hello.tpl
+
 printf "%s\n" Hello\ "$NAME"
 ```
 
-**Default Delimiters:**
+#### Usage Example
 
-The default delimiters for text tags are `<%` &amp; `%>`
+Here's a quick example invoking the template-generated script along with some user data:
+
+_usage example_
+```
+$ NAME=TekWizely source <( bash-tpl hello.tpl )
+
+Hello TekWizely
+```
+
+##### Default Delimiters
+
+The default delimiters for standard tags are `<%` &amp; `%>`
 
 See the [Customizing Delimiters](#customizing-delimiters) section to learn about the many ways you can customize delimiters to your liking.
-
-##### Example
-
-_test.tpl_
-```
-Hello '<% $NAME %>'
-```
-
-```
-$ NAME=TekWizely source <( bash-tpl test.tpl )
-
-Hello 'TekWizely'
-```
 
 ##### Trimming
 
 **NOTE:** For standard tags, The value within the delimiters is 'trimmed' before being processed, ie: `'<% $NAME %>'` is equivalent to `'<%$NAME%>'`.
 
 This is to encourage you to use liberal amounts of whitespace, keeping your templates easy to read and maintain.
-
-If you require leading and/or trailing space to be processed, see [quote tags](#quote-tag).
 
 #### Quote Tag
 
@@ -224,30 +230,30 @@ Is equivalent to :
 printf "%s\n" Hello\ " $NAME "  # Whitespace around $NAME is preserved
 ```
 
-**Delimiters:**
+##### Default Delimiters
 
-The delimiters for quote tags are `<%"` &amp; `"%>`
+The default delimiters for Quote Tags are `<%"` &amp; `"%>`
 
-More specifically, the delimiters are : Standard delimiters with leading+trailing quotes (`"`)
+More specifically, the delimiters are : Currently-configured Standard Tag delimiters with leading &amp; trailing quotes (`"`)
 
 NOTE: No whitespace is allowed between the standard tag and the quote character (ie. `<% "` would **not** be treated as a quote tag).
 
 ##### Example
 
-_test.tpl_
+_hello.tpl_
 ```
 Hello '<%" <% $NAME %> "%>'
 ```
 
 ```
-$ NAME=TekWizely source <( bash-tpl test.tpl )
+$ NAME=TekWizely source <( bash-tpl hello.tpl )
 
 Hello ' <% TekWizely %> '
 ```
 
 #### Statement Tag
 
-Statement tags allow you to inline more-complicated script statements, ie:
+Statement tags allow you to inline script statements, printing the output of the statement:
 
 ```
 Hello <%% echo $NAME %>
@@ -259,38 +265,40 @@ Is equivalent to :
 printf "%s\n" Hello\ "$(echo $NAME)"  # Trivial example to demonstrate the conversion
 ```
 
-**Delimiters:**
-
-The delimiters for statement tags are `<%%` &amp; `%>`
-
-More specifically, the delimiters are : Standard delimiters with the open delimiter followed by the statement tag delimiter.
-
-**NOTES:**
-* The statement tag delimiter (ie the 2nd `%`) can be configured separate from the standard tag delimiters. See [Customizing Delimiters](#customizing-delimiters) for details.
-* No whitespace is allowed between the standard tag and the statement tag delimiter (ie. `<% %` would **not** be treated as a statement tag).
-* The statement tag delimiter is *not* part of the close tag (`%>`), **just** the open tag (`<%%`)
-
-##### Example
+##### Better Example
 
 A *slightly* more useful example of a statement tag might be:
 
-_test.tpl_
+_hello.tpl_
 ```
 Hello <%% echo $NAME | tr '[:lower:]' '[:upper:]' %>
 ```
 
 ```
-$ NAME=TekWizely source <( bash-tpl test.tpl )
+$ NAME=TekWizely source <( bash-tpl hello.tpl )
 
 Hello TEKWIZELY
 ```
 
+##### Default Delimiters
+
+The default delimiters for Statement Tags are `<%%` &amp; `%>`
+
+More specifically, the delimiters are : Currently-configured Standard Tag delimiters with the open delimiter followed by the Statement Tag delimiter.
+
+**NOTES:**
+* The statement Tag delimiter (ie the 2nd `%`) can be configured separate from the Standard Tag delimiters. See [Customizing Delimiters](#customizing-delimiters) for details.
+* No whitespace is allowed between the Standard Tag and the Statement Tag delimiter (ie. `<% %` would **not** be treated as a Statement Tag).
+* The Statement Tag delimiter is *not* part of the close tag (`%>`), **just** the open tag (`<%%`)
+
 ##### Trimming
 
-**NOTE:** As with standard tags, the value within the statement tag is 'trimmed' before being processed, ie: `'<%% echo $NAME %>'` is equivalent to `'<%%echo $NAME%>'`.
+**NOTE:** As with Standard Tags, the value within the statement Tag is 'trimmed' before being processed, ie: `'<%% echo $NAME %>'` is equivalent to `'<%%echo $NAME%>'`.
 
 -------------------
 ### Statement Lines
+
+Statement lines allow you to easily insert a single line of script into your template:
 
 _test.tpl_
 ```
@@ -315,6 +323,8 @@ Hello TekWizely
 --------------------
 ### Statement Blocks
 
+Statement blocks allow you to add a full script block into your template:
+
 ```
 %
     if [ -z "${1}" ]; then
@@ -324,6 +334,8 @@ Hello TekWizely
 %
 Hello <% $1 %>
 ```
+
+**NOTE:** Statement Block delimiters must be on their own line with no other non-whitespace characters.
 
 _test with no arguments_
 ```
@@ -338,6 +350,87 @@ $ source <( bash-tpl test.tpl ) TekWizely
 
 Hello TekWizely
 ```
+
+##### Default Delimiter
+
+The default start &amp; stop delimiter for Statement Blocks is `%`
+
+More specifically, the default is : Currently-configured Statement Line delimiter.
+
+#### Printing Text Within a Statement Block
+
+Sometimes parts (or all) of your template may consist of complex code that just needs to print a small amount of text.
+
+You could close and re-open your statement blocks, but that might feel verbose depending on the situation:
+
+_verbose.tpl_
+```
+%
+    # ...
+    if (condition); then
+%
+condition text ...
+%
+    else
+%
+else text ...
+%
+    fi
+    # ...
+%
+```
+
+Bash-tpl allows you to print single lines of text within your statement blocks:
+
+_inline.tpl_
+```
+%
+    # ...
+    if (condition); then
+        % condition text ...
+    else
+        % else text ...
+    fi
+    # ...
+%
+```
+
+**NOTES:**
+* The indentation of the printed text lines will always match that of the statement block start tag
+* This is to encourage you to format your text lines within the context of your script
+* All whitespce _after_ the text line tag (`'% `') will be printed as-as
+
+##### Similar Script Output
+
+The two techniques generate nearly-identical scripts, but the inline script is slightly easier to read:
+
+_verbose.sh_
+```bash
+# ...
+if (condition); then
+printf "%s\n" condition\ text\ ...
+else
+printf "%s\n" else\ text\ ...
+fi
+# ...
+```
+
+_inline.sh_
+```bash
+# ...
+if (condition); then
+    printf "%s\n" condition\ text\ ...
+else
+    printf "%s\n" else\ text\ ...
+fi
+# ...
+```
+
+##### Default Delimiter
+
+The default delimiter for a Statement Block Text Line  is `'% '` (note the trailing space `' '`)
+
+More specifically, the default is : Currently-configured Statement Line delimiter, followed by a space (`' '`)
 
 ---------------------
 ### Template Comments
@@ -431,14 +524,15 @@ Hello TekWizely
 
 The DELIMS directive accepts the following parameters:
 
-| PARAM            | FORMAT    | NOTE |
-|------------------|-----------|------|
-| TAG              | `".. .."` | two 2-char sequences, separated by a **single** space
-| TAG-STMT         | `"."`     | 1 single character
-| STMT             | `".+"`    | 1 or more characters
-| STMT-BLOCK       | `".+ .+"` | two 1-or-more char sequences, separated by a **single** space
-| DIR \| DIRECTIVE | `".+"`    | 1 or more characters
-| CMT \| COMMENT   | `".+"`    | 1 or more characters
+| PARAM                | FORMAT     | NOTE                                                          |
+|----------------------|------------|---------------------------------------------------------------|
+| TAG                  | `".. .."`  | two 2-char sequences, separated by a **single** space         |
+| TAG-STMT             | `"."`      | 1 single character                                            |
+| STMT                 | `".+"`     | 1 or more characters                                          |
+| STMT-BLOCK           | `".+ .+"`  | two 1-or-more char sequences, separated by a **single** space |
+| TXT &#124; TEXT      | `".+[ ]?"` | 1 or more characters, with an optional trailing space         |
+| DIR &#124; DIRECTIVE | `".+"`     | 1 or more characters                                          |
+| CMT &#124; COMMENT   | `".+"`     | 1 or more characters                                          |
 
 
 #### RESET-DELIMS
@@ -471,20 +565,21 @@ There are several ways to customize delimiters for your templates.
 
 You can change the default delimiters globally via the following environment variables:
 
-| VARIABLE                   | FORMAT    | NOTE |
-|----------------------------|-----------|------|
-| BASH_TPL_TAG_DELIMS        | `".. .."` | two 2-char sequences, separated by a **single** space
-| BASH_TPL_TAG_STMT_DELIM    | `"."`     | 1 single character
-| BASH_TPL_STMT_DELIM        | `".+"`    | 1 or more characters
-| BASH_TPL_STMT_BLOCK_DELIMS | `".+ .+"` | two 1-or-more char sequences, separated by a **single** space
-| BASH_TPL_DIR_DELIM         | `".+"`    | 1 or more characters
-| BASH_TPL_CMT_DELIM         | `".+"`    | 1 or more characters
+| VARIABLE                   | FORMAT     | NOTE                                                          |
+|----------------------------|------------|---------------------------------------------------------------|
+| BASH_TPL_TAG_DELIMS        | `".. .."`  | two 2-char sequences, separated by a **single** space         |
+| BASH_TPL_TAG_STMT_DELIM    | `"."`      | 1 single character                                            |
+| BASH_TPL_STMT_DELIM        | `".+"`     | 1 or more characters                                          |
+| BASH_TPL_STMT_BLOCK_DELIMS | `".+ .+"`  | two 1-or-more char sequences, separated by a **single** space |
+| BASH_TPL_TEXT_DELIM        | `".+[ ]?"` | 1 or more characters, with an optional trailing space         |
+| BASH_TPL_DIR_DELIM         | `".+"`     | 1 or more characters                                          |
+| BASH_TPL_CMT_DELIM         | `".+"`     | 1 or more characters                                          |
 
 ##### quick example
 
 _test.tpl_
 ```
-%# customize text tag delimiter
+%# customize standard tag delimiter
 Hello, {{ $1 }}
 ```
 
@@ -499,14 +594,15 @@ Hello, TekWizely
 
 The following command line options are available for customizing delimiters:
 
-| OPTION              | FORMAT    | NOTE |
-|---------------------|-----------|------|
-| --tag-delims        | `".. .."` | two 2-char sequences, separated by a **single** space
-| --tag-stmt-delim    | `"."`     | 1 single character
-| --stmt-delim        | `".+"`    | 1 or more characters
-| --stmt-block-delims | `".+ .+"` | two 1-or-more char sequences, separated by a **single** space
-| --dir-delim \| --directive-delim | `".+"` | 1 or more characters
-| --cmt-delim \| --comment-delim   | `".+"` | 1 or more characters
+| OPTION                               | FORMAT     | NOTE                                                          |
+|--------------------------------------|------------|---------------------------------------------------------------|
+| --tag-delims                         | `".. .."`  | two 2-char sequences, separated by a **single** space         |
+| --tag-stmt-delim                     | `"."`      | 1 single character                                            |
+| --stmt-delim                         | `".+"`     | 1 or more characters                                          |
+| --stmt-block-delims                  | `".+ .+"`  | two 1-or-more char sequences, separated by a **single** space |
+| --txt-delim &#124; --text-delim      | `".+[ ]?"` | 1 or more characters, with an optional trailing space         |
+| --dir-delim &#124; --directive-delim | `".+"`     | 1 or more characters                                          |
+| --cmt-delim &#124; --comment-delim   | `".+"`     | 1 or more characters                                          |
 
 **NOTE:** Command-line options override environment variables.
 
@@ -514,7 +610,7 @@ The following command line options are available for customizing delimiters:
 
 _test.tpl_
 ```
-%# customize text tag delimiter
+%# customize standard tag delimiter
 Hello, {{ $1 }}
 ```
 

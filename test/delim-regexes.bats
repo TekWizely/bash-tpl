@@ -8,6 +8,7 @@ setup() {
 	[[ -n "${TAG_STMT_DELIM_REGEX}"   ]]
 	[[ -n "${STMT_DELIM_REGEX}"       ]]
 	[[ -n "${STMT_BLOCK_DELIM_REGEX}" ]]
+	[[ -n "${STMT_BLOCK_TEXT_REGEX}"  ]]
 }
 
 @test "TAG_DELIM_REGEX: invalid data should fail" {
@@ -151,4 +152,65 @@ setup() {
 	[[ '.. ..' =~ $STMT_BLOCK_DELIM_REGEX ]]
 	[[ "${BASH_REMATCH[1]}" == '..'       ]]
 	[[ "${BASH_REMATCH[2]}" == '..'       ]]
+}
+
+@test "STMT_BLOCK_TEXT_REGEX: invalid data should fail" {
+	[[ ! ''     =~ $STMT_BLOCK_TEXT_REGEX ]]
+	[[ ! ' '    =~ $STMT_BLOCK_TEXT_REGEX ]]
+	[[ ! '  '   =~ $STMT_BLOCK_TEXT_REGEX ]]
+	[[ ! ' a'   =~ $STMT_BLOCK_TEXT_REGEX ]]
+	[[ ! 'a  '  =~ $STMT_BLOCK_TEXT_REGEX ]]
+	[[ ! 'ab  ' =~ $STMT_BLOCK_TEXT_REGEX ]]
+	[[ ! 'a b'  =~ $STMT_BLOCK_TEXT_REGEX ]]
+	[[ ! ' ab'  =~ $STMT_BLOCK_TEXT_REGEX ]]
+}
+
+@test "STMT_BLOCK_TEXT_REGEX: valid data should pass" {
+	[[ 'a' =~ $STMT_BLOCK_TEXT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == 'a'   ]]
+
+	[[ 'a ' =~ $STMT_BLOCK_TEXT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == 'a '   ]]
+
+	[[ 'ab' =~ $STMT_BLOCK_TEXT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == 'ab'   ]]
+
+	[[ 'ab ' =~ $STMT_BLOCK_TEXT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == 'ab '   ]]
+
+	[[ 'abc' =~ $STMT_BLOCK_TEXT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == 'abc'   ]]
+
+	[[ 'abc ' =~ $STMT_BLOCK_TEXT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == 'abc '   ]]
+
+	[[ '%' =~ $STMT_BLOCK_TEXT_REGEX   ]]
+	[[ "${BASH_REMATCH[1]}" == '%'     ]]
+
+	[[ '% ' =~ $STMT_BLOCK_TEXT_REGEX   ]]
+	[[ "${BASH_REMATCH[1]}" == '% '     ]]
+
+	[[ '%%' =~ $STMT_BLOCK_TEXT_REGEX  ]]
+	[[ "${BASH_REMATCH[1]}" == '%%'    ]]
+
+	[[ '%% ' =~ $STMT_BLOCK_TEXT_REGEX  ]]
+	[[ "${BASH_REMATCH[1]}" == '%% '    ]]
+
+	[[ '%%%' =~ $STMT_BLOCK_TEXT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '%%%'   ]]
+
+	[[ '%%% ' =~ $STMT_BLOCK_TEXT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '%%% '   ]]
+
+	[[ '.' =~ $STMT_BLOCK_TEXT_REGEX   ]]
+	[[ "${BASH_REMATCH[1]}" == '.'     ]]
+
+	[[ '. ' =~ $STMT_BLOCK_TEXT_REGEX   ]]
+	[[ "${BASH_REMATCH[1]}" == '. '     ]]
+
+	[[ '.$.' =~ $STMT_BLOCK_TEXT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.$.'   ]]
+
+	[[ '.$. ' =~ $STMT_BLOCK_TEXT_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.$. '   ]]
 }

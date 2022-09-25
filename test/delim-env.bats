@@ -219,6 +219,60 @@ setup() {
 	[[ -z "${STMT_BLOCK_DELIM_UNDEFINED}"     ]]
 }
 
+@test "BASH_TPL_TEXT_DELIM: Should do nothing when unset or empty" {
+
+	[[ -z "${TEXT_DELIM}" ]]
+	[[ -z "${TEXT_DELIM_UNDEFINED}" ]]
+
+	TEXT_DELIM_UNDEFINED=1
+	[[ -n "${TEXT_DELIM_UNDEFINED}" ]]
+
+	unset BASH_TPL_TEXT_DELIM
+	parse_env_delims
+
+	[[ -z "${TEXT_DELIM}" ]]
+	[[ -n "${TEXT_DELIM_UNDEFINED}" ]]
+
+	BASH_TPL_TEXT_DELIM=''
+	parse_env_delims
+
+	[[ -z "${TEXT_DELIM}" ]]
+	[[ -n "${TEXT_DELIM_UNDEFINED}" ]]
+}
+
+@test "BASH_TPL_TEXT_DELIM: Should error on invalid input" {
+	# Space
+	#
+	BASH_TPL_TEXT_DELIM=' '
+	run parse_env_delims
+	[[ $status -eq 1 ]]
+	[[ "$output" == "Error: Invalid or missing text delimiter value for BASH_TPL_TEXT_DELIM: ' '" ]]
+}
+
+@test "BASH_TPL_TEXT_DELIM: Should process valid input" {
+
+	[[ -z "${TEXT_DELIM}" ]]
+	[[ -z "${TEXT_DELIM_UNDEFINED}" ]]
+
+	TEXT_DELIM_UNDEFINED=1
+	[[ -n "${TEXT_DELIM_UNDEFINED}" ]]
+
+	BASH_TPL_TEXT_DELIM='% '
+	parse_env_delims
+
+	[[    "${TEXT_DELIM}" == '% '    ]]
+	[[ -z "${TEXT_DELIM_UNDEFINED}" ]]
+
+	TEXT_DELIM_UNDEFINED=1
+	[[ -n "${TEXT_DELIM_UNDEFINED}" ]]
+
+	BASH_TPL_TEXT_DELIM='>>'
+	parse_env_delims
+
+	[[    "${TEXT_DELIM}" == '>>'   ]]
+	[[ -z "${TEXT_DELIM_UNDEFINED}" ]]
+}
+
 @test "BASH_TPL_DIR_DELIM: Should do nothing when unset or empty" {
 
 	[[ -z "${DIRECTIVE_DELIM}" ]]

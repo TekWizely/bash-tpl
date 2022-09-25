@@ -53,7 +53,7 @@ options:
         show version
   -o, --output-file <filename>
         write to specified file (default: stdout)
-   --   treat reamining options as positional arguments
+   --   treat remaining options as positional arguments
    -    read from stdin
 
 customize delimiters:
@@ -66,6 +66,9 @@ customize delimiters:
   --stmt-block-delims 'x+ x+'
         set statement block delimiters
         defaults to statement delimiter if not explicitly set
+  --txt-delim
+  --text-delim 'x+[ ]?' (single trailing space allowed)
+        set text delimiter (default: '% ')
   --dir-delim
   --directive-delim 'x+'
         set directive delimiter (default: '.')
@@ -82,6 +85,7 @@ supported environment variables:
     BASH_TPL_TAG_STMT_DELIM
     BASH_TPL_STMT_DELIM
     BASH_TPL_STMT_BLOCK_DELIMS
+    BASH_TPL_TEXT_DELIM
     BASH_TPL_DIR_DELIM
     BASH_TPL_CMT_DELIM
 
@@ -104,6 +108,7 @@ TAG_DELIM_REGEX='^([^[:blank:]])([^[:blank:]]) ([^[:blank:]])([^[:blank:]])$'
 TAG_STMT_DELIM_REGEX='^([^[:blank:]])$'
 STMT_DELIM_REGEX='^([^[:blank:]]+)$'
 STMT_BLOCK_DELIM_REGEX='^([^[:blank:]]+) ([^[:blank:]]+)$'
+STMT_BLOCK_TEXT_REGEX='^([^[:blank:]]+\ ?)$' # Optional trailing ' '
 
 ##
 # reset_delims
@@ -117,6 +122,9 @@ function reset_delims() {
 	TAG_STMT_DELIM='%'
 
 	STMT_DELIM='%'
+
+	TEXT_DELIM_UNDEFINED=1
+	TEXT_DELIM=''
 
 	STMT_BLOCK_DELIM_UNDEFINED=1
 	STMT_BLOCK_START_DELIM=''
@@ -190,6 +198,21 @@ function parse_stmt_block_delims() {
 }
 
 ##
+# parse_text_delim - Uses STMT delim regex
+# $1 = delim
+# $2 = src (for error msg)
+#
+function parse_text_delim() {
+	if [[ "${1}" =~ $STMT_BLOCK_TEXT_REGEX ]]; then
+		TEXT_DELIM="${1}"
+		TEXT_DELIM_UNDEFINED=''
+	else
+		echo "Error: Invalid or missing text delimiter value for ${2:-txt delim}: '${1}'" >&2
+		exit 1
+	fi
+}
+
+##
 # parse_directive_delim - Uses STMT delim regex
 # $1 = delim
 # $2 = src (for error msg)
@@ -229,6 +252,12 @@ function reset_template_regexes() {
 		STMT_BLOCK_STOP_DELIM="${STMT_DELIM}"
 	fi
 
+	# Fixup TEXT delim - Default to STMT_DELIM followed by ' ' if not set
+	#
+	if [[ -n "${TEXT_DELIM_UNDEFINED}" ]]; then
+		TEXT_DELIM="${STMT_DELIM} " # Note trailing space (' ')
+	fi
+
 	# Fixup COMMENT delim - Default to STMT_DELIM followed by '#' if not set
 	#
 	if [[ -n "${COMMENT_DELIM_UNDEFINED}" ]]; then
@@ -260,6 +289,10 @@ function reset_template_regexes() {
 	d="${STMT_BLOCK_STOP_DELIM}"
 	escape_regex d
 	STATEMENT_BLOCK_STOP_REGEX="^([[:blank:]]*)${d}[[:blank:]]*\$"
+
+	d="${TEXT_DELIM}"
+	escape_regex d
+	STATEMENT_BLOCK_TEXT_REGEX="^([[:blank:]]*)${d}([[:blank:]]*[^[:blank:]](.*))\$"
 
 	TEXT_REGEX='^([[:blank:]]*)([^[:blank:]](.*))?$'
 
@@ -514,6 +547,19 @@ function print_text() {
 	process_tags "${BASE_TEXT_INDENT}${indent}${2}"
 }
 
+##
+# print_statement_block_text - generates a printf statement for template text within a statement block
+# $1 = leading indentation
+# $2 = text
+#
+function print_statement_block_text() {
+	local indent STATEMENT_INDENT
+	print_statement_block_indent "${1}"
+	peek_statement_indent # does NOT overwrite global STATEMENT_INDENT
+	indent=$(get_text_indent "${STATEMENT_INDENT}")
+	process_tags "${BASE_TEXT_INDENT}${indent}${2}"
+}
+
 #######################################################################
 # Process Functions
 #######################################################################
@@ -571,6 +617,8 @@ DELIM_DIR_TAG_REGEX='[Tt][Aa][Gg]\s*=\s*"([^"]*)"'
 DELIM_DIR_TAG_STMT_REGEX='[Tt][Aa][Gg][_-]?[Ss][Tt][Mm][Tt]\s*=\s*"([^"]*)"'
 DELIM_DIR_STMT_REGEX='[Ss][Tt][Mm][Tt]\s*=\s*"([^"]*)"'
 DELIM_DIR_STMT_BLOCK_REGEX='[Ss][Tt][Mm][Tt][_-]?[Bb][Ll][Oo][Cc][Kk]\s*=\s*"([^"]*)"'
+DELIM_DIR_TXT_REGEX='[Tt][Xx][Tt]\s*=\s*"([^"]*)"'
+DELIM_DIR_TEXT_REGEX='[Tt][Ee][Xx][Tt]\s*=\s*"([^"]*)"'
 DELIM_DIR_DIR_REGEX='[Dd][Ii][Rr]\s*=\s*"([^"]*)"'
 DELIM_DIR_DIRECTIVE_REGEX='[Dd][Ii][Rr][Ee][Cc][Tt][Ii][Vv][Ee]\s*=\s*"([^"]*)"'
 DELIM_DIR_CMT_REGEX='[Cc][Mm][Tt]\s*=\s*"([^"]*)"'
@@ -602,6 +650,7 @@ function process_directive() {
 				--tag-stmt-delim "${TAG_STMT_DELIM}" \
 				--stmt-delim "${STMT_DELIM}" \
 				--stmt-block-delims "${STMT_BLOCK_START_DELIM} ${STMT_BLOCK_STOP_DELIM}" \
+				--txt-delim "${TEXT_DELIM}" \
 				--dir-delim "${DIRECTIVE_DELIM}" \
 				--cmt-delim "${COMMENT_DELIM}" \
 				"${args_arr[@]}"
@@ -627,6 +676,11 @@ function process_directive() {
 			if [[ "${3}" =~ $DELIM_DIR_STMT_BLOCK_REGEX ]]; then
 				parse_stmt_block_delims "${BASH_REMATCH[1]}" '"DELIMS STMT-BLOCK directive'
 			fi
+			# TEXT
+			#
+			if [[ "${3}" =~ $DELIM_DIR_TXT_REGEX || "${3}" =~ $DELIM_DIR_TEXT_REGEX ]]; then
+				parse_text_delim "${BASH_REMATCH[1]}" 'DELIMS TEXT directive'
+			fi
 			# DIRECTIVE
 			#
 			if [[ "${3}" =~ $DELIM_DIR_DIR_REGEX || "${3}" =~ $DELIM_DIR_DIRECTIVE_REGEX ]]; then
@@ -651,21 +705,33 @@ function process_directive() {
 	esac
 }
 
+##
+# debug_state logs the state of the global variables.
+# To use this, you have to un-comment the usages
+# in process_stdin AND set the BASH_TPL_DEBUG variable
+# when invoking the script.
+#
+function debug_state() {
+	[ -n "${BASH_TPL_DEBUG:-}" ] || return
+	printf "#<< ---------------\n"
+	printf "#LINE NO          : %s\n" "${LINE_NO:-}"
+	printf "#STATE            : %s\n" "${STATE:-}"
+	printf "#STATES           : %s\n" "$(declare -p STATES)"
+	printf "#STATEMENT_INDENTS: %s\n" "$(declare -p STATEMENT_INDENTS)"
+	printf "#TEXT_INDENTS     : %s\n" "$(declare -p TEXT_INDENTS)"
+	printf "#PRINT_INDENTS    : %s\n" "$(declare -p PRINT_INDENTS)"
+	printf "#LINE TEXT        : '%s'\n" "${LINE:-}"
+	printf "#>> ---------------\n"
+}
+
 function process_stdin() {
-	# local lineno
-	# lineno=0 # 1 on first use
+	# LINE_NO=0 # 1 on first use
 	while IFS="" read -r LINE || [ -n "${LINE}" ]; do
-		# ((lineno += 1))
-		# echo "#LINE NO          : ${lineno}"
-		# echo "#LINE TEXT        : '${LINE}'"
-		# echo "#STATE            : ${STATE}"
-		# echo "#STATES           : $(declare -p STATES)"
-		# echo "#STATEMENT_INDENTS: $(declare -p STATEMENT_INDENTS)"
-		# echo "#TEXT_INDENTS     : $(declare -p TEXT_INDENTS)"
-		# echo "#PRINT_INDENTS    : $(declare -p PRINT_INDENTS)"
-		# echo -e "#>> ----------------\n"
+		# ((LINE_NO += 1))
+		# debug_state
 		state_"${STATE}" "${LINE}"
 	done
+	# debug_state
 }
 
 #######################################################################
@@ -948,7 +1014,29 @@ function state_START_STMT_BLOCK() {
 		#
 		pop_statement_indent
 		peek_state
-	# Line is text (assumed to be a statement)
+	# Line is text
+	#
+	elif [[ "${1}" =~ $STATEMENT_BLOCK_TEXT_REGEX ]]; then
+		peek_statement_indent
+		# Text is indented
+		#
+		if [[ "${BASH_REMATCH[1]}" == "${STATEMENT_INDENT}"* && ${#BASH_REMATCH[1]} -gt ${#STATEMENT_INDENT} ]]; then
+			push_text_indent "${BASH_REMATCH[1]}"
+			push_print_indent "${STATEMENT_INDENT}"
+			push_state "STMT_BLOCK"
+			peek_state
+			# Adjust and print
+			#
+			print_statement_block_text "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+		# Text is NOT indented
+		#
+		else
+			# Print leading indentation as-is
+			# Keep current state
+			#
+			print_text "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+		fi
+	# Line is assumed to be a statement
 	#
 	elif [[ "${1}" =~ $TEXT_REGEX ]]; then
 		peek_statement_indent
@@ -960,6 +1048,7 @@ function state_START_STMT_BLOCK() {
 			push_text_indent "${BASH_REMATCH[1]}"
 			push_print_indent "${STATEMENT_INDENT}"
 			push_state "STMT_BLOCK"
+			peek_state
 			# Adjust and print
 			#
 			print_statement_block_indent "${BASH_REMATCH[1]}"
@@ -967,15 +1056,12 @@ function state_START_STMT_BLOCK() {
 		# Statement is NOT indented
 		#
 		else
-			push_text_indent ""
-			push_print_indent ""
-			push_state "STMT_BLOCK"
 			# Print leading indentation as-is
+			# Keep current state
 			#
 			print_statement_indent "${BASH_REMATCH[1]}"
 			print_statement "${BASH_REMATCH[2]}"
 		fi
-		peek_state
 	fi
 }
 
@@ -994,7 +1080,24 @@ function state_STMT_BLOCK() {
 		pop_print_indent
 		pop_state
 		peek_state
-	# Line is text (assumed to be a statement)
+	# Line is text
+	#
+	elif [[ "${1}" =~ $STATEMENT_BLOCK_TEXT_REGEX ]]; then
+		peek_statement_indent
+		# Text is indented
+		#
+		if [[ "${BASH_REMATCH[1]}" == "${STATEMENT_INDENT}"* && ${#BASH_REMATCH[1]} -gt ${#STATEMENT_INDENT} ]]; then
+			# Adjust and print
+			#
+			print_statement_block_text "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+		# Statement is NOT indented
+		#
+		else
+			# Print leading indentation as-is
+			#
+			print_text "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+		fi
+	# Line is assumed to be a statement
 	#
 	elif [[ "${1}" =~ $TEXT_REGEX ]]; then
 		peek_statement_indent
@@ -1042,6 +1145,10 @@ function parse_env_delims() {
 
 	if [ -n "${BASH_TPL_STMT_BLOCK_DELIMS}" ]; then
 		parse_stmt_block_delims "${BASH_TPL_STMT_BLOCK_DELIMS}" "BASH_TPL_STMT_BLOCK_DELIMS"
+	fi
+
+	if [ -n "${BASH_TPL_TEXT_DELIM}" ]; then
+		parse_text_delim "${BASH_TPL_TEXT_DELIM}" "BASH_TPL_TEXT_DELIM"
 	fi
 
 	if [ -n "${BASH_TPL_DIR_DELIM}" ]; then
@@ -1100,6 +1207,10 @@ function parse_args() {
 				;;
 			--stmt-block-delims)
 				parse_stmt_block_delims "$2" "$1"
+				shift 2
+				;;
+			--txt-delim | --text-delim)
+				parse_text_delim "$2" "$1"
 				shift 2
 				;;
 			--dir-delim | --directive-delim)
