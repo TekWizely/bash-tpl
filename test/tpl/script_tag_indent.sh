@@ -4,4 +4,4 @@ if true; then
 else
     printf "%s\n" Text2
 fi
-    printf "%s\n" Text3
+    printf "%s\n" \ \ \ \ Text3

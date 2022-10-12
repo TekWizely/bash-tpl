@@ -23,7 +23,7 @@ printf "%s\n" \}
 _fix_nullglob=$(shopt -p nullglob || true)
 shopt -s nullglob
 for tpl in *.tpl; do
-printf "\n"
+	printf "\n"
 	printf "%s\n" @test\ \"tpl:\ Should\ render\ test/tpl/"$tpl"\ to\ match\ test/tpl/"${tpl%.tpl}.sh"\ \{
 		printf "%s\n" $'\ttest_template "'"$tpl"\"
 	printf "%s\n" \}
