@@ -1,6 +1,7 @@
 # test tempates in root folder
 #
 /*.tpl
+/*.sh
 
 # auto-generated tpl.bats
 #

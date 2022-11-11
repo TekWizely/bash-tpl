@@ -11,11 +11,11 @@ VERSION="v0.6.0"
 #######################################################################
 # Bash-TPL: A Smart, Lightweight shell script templating engine
 #
-# Lets you you mark up textual files with shell commands and variable
+# Lets you mark up textual files with shell commands and variable
 # replacements, while minimally impacting your original file layout.
 #
 # Templates are compiled into shell scripts that you can invoke
-# (along with variables, arguments, etc) to generate complete and
+# (along with variables, arguments, etc.) to generate complete and
 # well-formatted output text files.
 #
 #  Smart
@@ -30,7 +30,7 @@ VERSION="v0.6.0"
 #
 #  NOTE: Consistent Formatting
 #
-# The key to success with Bash-TPL's indentation fix-up logic is
+# The key to success with Bash-TPL indentation fix-up logic is
 # Consistent Formatting; using consistent indentation throughout your
 # template will yield best results.
 #
@@ -379,18 +379,8 @@ STATE="DEFAULT" # [ DEFAULT, MAYBE_TXT_BLOCK, TXT_BLOCK, START_STMT_BLOCK, STMT_
 # push_state
 #
 function push_state() {
-	STATES+=("${1}")
-}
-
-##
-# peek_state
-#
-function peek_state() {
-	if [[ ${#STATES[@]} -gt 0 ]]; then
-		STATE="${STATES[${#STATES[@]} - 1]}"
-	else
-		STATE="DEFAULT"
-	fi
+	STATES+=("${STATE}")
+	STATE="${1}"
 }
 
 ##
@@ -398,41 +388,10 @@ function peek_state() {
 #
 function pop_state() {
 	if [[ ${#STATES[@]} -gt 0 ]]; then
+		STATE="${STATES[${#STATES[@]} - 1]}"
 		unset "STATES[${#STATES[@]}-1]"
-	fi
-}
-
-#######################################################################
-# STATEMENT_INDENTS
-#######################################################################
-
-STATEMENT_INDENTS=() # empty => ""
-STATEMENT_INDENT=""
-
-##
-# push_statement_indent
-#
-function push_statement_indent() {
-	STATEMENT_INDENTS+=("${1}")
-}
-
-##
-# peek_statement_indent
-#
-function peek_statement_indent() {
-	if [[ ${#STATEMENT_INDENTS[@]} -gt 0 ]]; then
-		STATEMENT_INDENT="${STATEMENT_INDENTS[${#STATEMENT_INDENTS[@]} - 1]}"
 	else
-		STATEMENT_INDENT=""
-	fi
-}
-
-##
-# pop_statement_indent
-#
-function pop_statement_indent() {
-	if [[ ${#STATEMENT_INDENTS[@]} -gt 0 ]]; then
-		unset "STATEMENT_INDENTS[${#STATEMENT_INDENTS[@]}-1]"
+		STATE="DEFAULT"
 	fi
 }
 
@@ -447,18 +406,8 @@ TEXT_INDENT=""
 # push_text_indent
 #
 function push_text_indent() {
-	TEXT_INDENTS+=("${1}")
-}
-
-##
-# peek_text_indent
-#
-function peek_text_indent() {
-	if [[ ${#TEXT_INDENTS[@]} -gt 0 ]]; then
-		TEXT_INDENT="${TEXT_INDENTS[${#TEXT_INDENTS[@]} - 1]}"
-	else
-		TEXT_INDENT=""
-	fi
+	TEXT_INDENTS+=("${TEXT_INDENT}")
+	TEXT_INDENT="${1}"
 }
 
 ##
@@ -466,29 +415,64 @@ function peek_text_indent() {
 #
 function pop_text_indent() {
 	if [[ ${#TEXT_INDENTS[@]} -gt 0 ]]; then
-		unset "TEXT_INDENTS[${#TEXT_INDENTS[@]}-1]"
+		TEXT_INDENT="${TEXT_INDENTS[${#TEXT_INDENTS[@]} - 1]}"
+		unset "TEXT_INDENTS[${#TEXT_INDENTS[@]} - 1]"
+	else
+		TEXT_INDENT=""
 	fi
 }
 
 #######################################################################
-# PRINT_INDENTS
+# STATEMENT_INDENTS
 #######################################################################
 
-PRINT_INDENTS=() # empty => ""
+STATEMENT_INDENTS=() # empty => ""
+STATEMENT_INDENT=""
 
 ##
-# push_print_indent
+# push_statement_indent
 #
-function push_print_indent() {
-	PRINT_INDENTS+=("${1}")
+function push_statement_indent() {
+	STATEMENT_INDENTS+=("${STATEMENT_INDENT}")
+	STATEMENT_INDENT="${1}"
 }
 
 ##
-# pop_print_indent
+# pop_statement_indent
 #
-function pop_print_indent() {
-	if [[ ${#PRINT_INDENTS[@]} -gt 0 ]]; then
-		unset "PRINT_INDENTS[${#PRINT_INDENTS[@]}-1]"
+function pop_statement_indent() {
+	if [[ ${#STATEMENT_INDENTS[@]} -gt 0 ]]; then
+		STATEMENT_INDENT="${STATEMENT_INDENTS[${#STATEMENT_INDENTS[@]} - 1]}"
+		unset "STATEMENT_INDENTS[${#STATEMENT_INDENTS[@]} - 1]"
+	else
+		STATEMENT_INDENT=""
+	fi
+}
+
+#######################################################################
+# BLOCK_INDENTS
+#######################################################################
+
+BLOCK_INDENTS=() # empty => ""
+BLOCK_INDENT=""
+
+##
+# push_block_indent
+#
+function push_block_indent() {
+	BLOCK_INDENTS+=("${BLOCK_INDENT}")
+	BLOCK_INDENT="${1}"
+}
+
+##
+# pop_block_indent
+#
+function pop_block_indent() {
+	if [[ ${#BLOCK_INDENTS[@]} -gt 0 ]]; then
+		BLOCK_INDENT="${BLOCK_INDENTS[${#BLOCK_INDENTS[@]} - 1]}"
+		unset "BLOCK_INDENTS[${#BLOCK_INDENTS[@]} - 1]"
+	else
+		BLOCK_INDENT=""
 	fi
 }
 
@@ -497,79 +481,30 @@ function pop_print_indent() {
 #######################################################################
 
 ##
-# print_statement_indent
-#
-function print_statement_indent() {
-	printf "%s%s" "${BASE_STMT_INDENT}" "${1}"
-}
-
-##
 # print_statement
+# $1 = leading indentation
+# $2 = statement
 #
 function print_statement() {
-	printf "%s\n" "${1}"
-}
-
-##
-# print_statement_block_indent
-#
-function print_statement_block_indent() {
-	local indent text_indent print_indent n
-	indent="${1}"
-	n=$((${#PRINT_INDENTS[@]} - 1))
-	if [[ ${n} -ge 0 ]]; then
-		text_indent="${TEXT_INDENTS[n]}"
-		print_indent="${PRINT_INDENTS[n]}"
-		if [[ "${indent}" == "${text_indent}"* ]]; then
-			indent="${print_indent}${indent/#$text_indent/}"
-		fi
+	local indent="${1}"
+	if [[ "${indent}" == "${BLOCK_INDENT}"* ]]; then
+		indent="${indent/#$BLOCK_INDENT/}"
 	fi
-	printf "%s%s" "${BASE_STMT_INDENT}" "${indent}"
-}
-
-##
-# get_text_indent
-#
-function get_text_indent() {
-	local indent text_indent print_indent n
-	indent="${1}"
-	n=$((${#PRINT_INDENTS[@]} - 1))
-	while [[ ${n} -ge 0 ]]; do
-		text_indent="${TEXT_INDENTS[n]}"
-		print_indent="${PRINT_INDENTS[n]}"
-		if [[ "${indent}" == "${text_indent}"* ]]; then
-			indent="${print_indent}${indent/#$text_indent/}"
-		else
-			break
-		fi
-		((n -= 1))
-	done
-	printf "%s" "${indent}"
+	printf "%s\n" "${BASE_STMT_INDENT}${STATEMENT_INDENT}${indent}${2}"
 }
 
 ##
 # print_text - generates a printf statement for template text
-# $1 = leading indentation
+# $1 = leading text indentation
 # $2 = text
+# $3 = leading stmt indentation [OPTIONAL]
 #
 function print_text() {
-	print_statement_indent "${1}"
-	local indent
-	indent=$(get_text_indent "$1")
-	process_tags "${BASE_TEXT_INDENT}${indent}${2}"
-}
-
-##
-# print_statement_block_text - generates a printf statement for template text within a statement block
-# $1 = leading indentation
-# $2 = text
-#
-function print_statement_block_text() {
-	local indent TEXT_INDENT
-	print_statement_block_indent "${1}"
-	peek_text_indent # does NOT overwrite global TEXT_INDENT
-	indent=$(get_text_indent "${TEXT_INDENT}")
-	process_tags "${BASE_TEXT_INDENT}${indent}${2}"
+	local indent="${1}"
+	if [[ "${indent}" == "${BLOCK_INDENT}"* ]]; then
+		indent="${indent/#$BLOCK_INDENT/}"
+	fi
+	process_tags "${3-${BLOCK_INDENT}}" "${BASE_TEXT_INDENT}${TEXT_INDENT}${indent}${2}"
 }
 
 #######################################################################
@@ -578,10 +513,13 @@ function print_statement_block_text() {
 
 ##
 # process_tags
+# $1 = statement indentation
+# $2 = full line of text to process
 #
 function process_tags() {
-	local line args arg quoted
-	line="${1}"
+	local stmt_indent line args arg quoted
+	stmt_indent="${1}"
+	line="${2}"
 	args=""
 	while [ -n "${line}" ]; do
 		# echo "# LINE @ START: $(declare -p line)" >&2
@@ -600,7 +538,7 @@ function process_tags() {
 			trim arg
 			args="${args}\"\$(${arg})\""
 			line="${BASH_REMATCH[5]}"
-		# Check standard regex last as its a super-set of quote and stmt regex
+		# Check standard regex last as it's a super-set of quote and stmt regex
 		#
 		elif [[ "${line}" =~ $TAG_STD_REGEX ]]; then
 			# echo "# STD TAG MATCH: $(declare -p BASH_REMATCH)" >&2
@@ -618,11 +556,13 @@ function process_tags() {
 		fi
 		# echo "# LINE @ END: $(declare -p line)" >&2
 	done
+	local stmt
 	if [ -n "${args}" ]; then
-		printf "printf \"%%s\\\\n\" %s\n" "${args}"
+		printf -v stmt "printf \"%%s\\\\n\" %s" "${args}"
 	else
-		printf "printf \"\\\\n\"\n"
+		printf -v stmt "printf \"\\\\n\""
 	fi
+	print_statement "${stmt_indent}" "${stmt}"
 }
 
 DELIM_DIR_TAG_REGEX='[Tt][Aa][Gg]\s*=\s*"([^"]*)"'
@@ -643,21 +583,24 @@ DELIM_DIR_COMMENT_REGEX='[Cc][Oo][Mm][Mm][Ee][Nn][Tt]\s*=\s*"([^"]*)"'
 # $3 = directive arg(s)
 #
 function process_directive() {
-	local directive stmt_indent text_indent
+	local directive
 	directive="${2}"
 	normalize_directive directive
 	case "${directive}" in
 		INCLUDE)
-			stmt_indent="${1}"
-			text_indent=$(get_text_indent "${1}")
+			local indent="${1}"
+			if [[ "${indent}" == "${BLOCK_INDENT}"* ]]; then
+				indent="${indent/#$BLOCK_INDENT/}"
+			fi
 			local args args_arr
 			args="${3}"
 			trim args
 			declare -a args_arr="(${args})"
 			# shellcheck disable=SC2128  # We choose BASH_SOURCE vs BASH_SOURCE[0] for compatability
 			"${BASH_SOURCE}" \
-				--stmt-indent "${stmt_indent}" \
-				--text-indent "${text_indent}" \
+				--text-indent "${BASE_TEXT_INDENT}${TEXT_INDENT}${indent}" \
+				--stmt-indent "${BASE_STMT_INDENT}${STATEMENT_INDENT}${indent}" \
+				--block-indent "${BASE_BLOCK_INDENT}${BLOCK_INDENT}" \
 				--tag-delims "${TAG_START_DELIM1}${TAG_START_DELIM2} ${TAG_STOP_DELIM1}${TAG_STOP_DELIM2}" \
 				--tag-stmt-delim "${TAG_STMT_DELIM}" \
 				--stmt-delim "${STMT_DELIM}" \
@@ -717,26 +660,50 @@ function process_directive() {
 	esac
 }
 
+function debug_array() {
+	printf "["
+	local need_comma=""
+	while [[ ${#@} -gt 0 ]]; do
+		if [ -n "${need_comma:-}" ]; then
+			printf ", "
+		fi
+		if [ -n "${1:-}" ]; then
+			printf "'%q'" "${1}"
+		else
+			printf "''"
+		fi
+		need_comma=1
+		shift
+	done
+	printf "]"
+}
 ##
 # debug_state logs the state of the global variables.
-# To use this, you have to un-comment the usages
-# in process_line AND set the BASH_TPL_DEBUG variable
+# To use this set the BASH_TPL_DEBUG variable to a non-empty value
 # when invoking the script.
+# TODO Track source input file+line numbers
+# $1 = template line | EOF
 #
 function debug_state() {
-	[ -n "${BASH_TPL_DEBUG:-}" ] || return
 	printf "#<< ---------------\n"
+	printf "#LINE TEXT        : '%s'\n" "${1-<EOF>}"
 	printf "#STATE            : %s\n" "${STATE:-}"
-	printf "#STATES           : %s\n" "$(declare -p STATES)"
-	printf "#STATEMENT_INDENTS: %s\n" "$(declare -p STATEMENT_INDENTS)"
-	printf "#TEXT_INDENTS     : %s\n" "$(declare -p TEXT_INDENTS)"
-	printf "#PRINT_INDENTS    : %s\n" "$(declare -p PRINT_INDENTS)"
-	printf "#LINE TEXT        : '%s'\n" "${1:-<EOF>}"
+	printf "#STATES           : %s\n" "$(debug_array "${STATES[@]}")"
+	printf "#TEXT_INDENT      : %q\n" "${TEXT_INDENT:-}"
+	printf "#TEXT_INDENTS     : %s\n" "$(debug_array "${TEXT_INDENTS[@]}")"
+	printf "#STATEMENT_INDENT : %q\n" "${STATEMENT_INDENT:-}"
+	printf "#STATEMENT_INDENTS: %s\n" "$(debug_array "${STATEMENT_INDENTS[@]}")"
+	printf "#BLOCK_INDENT     : %q\n" "${BLOCK_INDENT:-}"
+	printf "#BLOCK_INDENTS    : %s\n" "$(debug_array "${BLOCK_INDENTS[@]}")"
+	printf "#TEXT_BLOCK_LINES_INDENT            : %q\n" "${TEXT_BLOCK_LINES_INDENT}"
+	printf "#TEXT_BLOCK_LINES_INDENT_SET        : %q\n" "${TEXT_BLOCK_LINES_INDENT_SET}"
+	printf "#STATEMENT_BLOCK_LINES_INDENT       : %q\n" "${STATEMENT_BLOCK_LINES_INDENT}"
+	printf "#STATEMENT_BLOCK_LINES_INDENT_STATE : %q\n" "${STATEMENT_BLOCK_LINES_INDENT_STATE}"
 	printf "#>> ---------------\n"
 }
 
 function process_line() {
-	#debug_state ${@+"$@"}
+	[ -n "${BASH_TPL_DEBUG:-}" ] && debug_state ${@+"$@"}
 	state_"${STATE}" ${@+"$@"}
 }
 
@@ -768,15 +735,14 @@ function state_DEFAULT() {
 	# Line is a statement
 	#
 	if [[ "${1}" =~ $STATEMENT_REGEX ]]; then
+		print_statement "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
 		push_statement_indent "${BASH_REMATCH[1]}"
-		print_statement_indent "${BASH_REMATCH[1]}"
-		print_statement "${BASH_REMATCH[2]}"
-		STATE="MAYBE_TXT_BLOCK"
+		push_state "MAYBE_TXT_BLOCK"
 	# Line is a statement block start
 	#
 	elif [[ "${1}" =~ $STATEMENT_BLOCK_START_REGEX ]]; then
 		push_statement_indent "${BASH_REMATCH[1]}"
-		STATE="START_STMT_BLOCK"
+		push_state "START_STMT_BLOCK"
 	# Line is a directive
 	#
 	elif [[ "${1}" =~ $DIRECTIVE_REGEX ]]; then
@@ -786,7 +752,7 @@ function state_DEFAULT() {
 	elif [[ "${1}" =~ $COMMENT_REGEX ]]; then
 		: # Comments do not generate output
 	# Line is text
-	# NOTE : Check LAST because *everything* looks like text
+	# NOTE : Check LAST because regex always matches
 	#
 	elif [[ "${1}" =~ $TEXT_REGEX ]]; then
 		print_text "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
@@ -795,65 +761,80 @@ function state_DEFAULT() {
 
 TEXT_BLOCK_LINES=()
 TEXT_BLOCK_LINES_INDENT=""
+TEXT_BLOCK_LINES_INDENT_SET=""
 
 ##
 # state_MAYBE_TXT_BLOCK
 # Previous line was a statement
 # We might be starting a text block
+# NOTE: Assumes
+#    push_state "MAYBE_TXT_BLOCK"
+#    push_statement_indent
 #
 function state_MAYBE_TXT_BLOCK() {
-	# If there's a line to process (ie. not EOF)
+	# If there's a line to process (i.e. not EOF)
 	#
 	if [[ ${#@} -gt 0 ]]; then
-		# Save line to process later
-		#
-		TEXT_BLOCK_LINES+=("${1}")
-		peek_statement_indent
 		# Current line is empty
 		# Considered text block content,
 		# but doesn't contribute to indentation tracking
 		#
 		if [[ "${1}" == "" ]]; then
-			return # Line already saved
+			TEXT_BLOCK_LINES+=("${1}") # Save line
+			return
 		# Current line is a block-end statement,
 		# i.e. it's a statement at the same indentation as the start statement
 		#
 		elif [[ "${1}" =~ $STATEMENT_REGEX && "${BASH_REMATCH[1]}" == "${STATEMENT_INDENT}" ]]; then
 			# We've saved a FULL text block !
 			# Use computed indentation
-			# NOTE: Statement block end (+ cleanup) will be processed by handler state
 			#
-			push_text_indent "${TEXT_BLOCK_LINES_INDENT}"
-			push_print_indent "${STATEMENT_INDENT}"
+			push_text_indent "${TEXT_INDENT}${STATEMENT_INDENT/#$BLOCK_INDENT/}" # Additive
+			push_statement_indent "${TEXT_BLOCK_LINES_INDENT}"
+			push_block_indent "${TEXT_BLOCK_LINES_INDENT}"
+			local state_marker=${#STATES[@]} # Save for cleanup
 			push_state "TXT_BLOCK"
-			peek_state
 			# Text blocks can be nested, so save lines and cleanup *before* processing
 			#
 			local lines=("${TEXT_BLOCK_LINES[@]}")
-			# Clean up
-			#
 			TEXT_BLOCK_LINES=()
 			TEXT_BLOCK_LINES_INDENT=""
+			TEXT_BLOCK_LINES_INDENT_SET=""
 			# Process saved lines now in new state
 			#
 			local line
 			for line in "${lines[@]}"; do
 				process_line "${line}"
 			done
+			# Clean up our TXT_BLOCK state and any other danglers
+			#
+			while [[ ${#STATES[@]} -gt $state_marker ]]; do
+				process_line # EOF
+			done
+			# Clean up our MAYBE_TXT_BLOCK state
+			#
+			pop_statement_indent
+			pop_state
+			# Process close block in parent context
+			#
+			process_line "${1}"
 			return
 		# Capture line indentation for tracking
 		# TEXT_REGEX is perfect for this, so just re-use it
+		# NOTE: Regex always matches
 		#
 		elif [[ "${1}" =~ $TEXT_REGEX ]]; then
+			TEXT_BLOCK_LINES+=("${1}") # Save line
 			# If current line is indented
 			#
 			if [[ "${BASH_REMATCH[1]}" != "${STATEMENT_INDENT}" && "${BASH_REMATCH[1]}" == "${STATEMENT_INDENT}"* ]]; then
 				# If first time through
 				#
-				if [[ "${TEXT_BLOCK_LINES_INDENT}" == "" ]]; then
+				if [[ "${TEXT_BLOCK_LINES_INDENT_SET}" == "" ]]; then
 					# Track current indentation
 					#
 					TEXT_BLOCK_LINES_INDENT="${BASH_REMATCH[1]}"
+					TEXT_BLOCK_LINES_INDENT_SET="1"
 					return
 				# If current line is indented SAME OR LESS than tracked
 				#
@@ -878,8 +859,6 @@ function state_MAYBE_TXT_BLOCK() {
 			else
 				: # Here for completeness
 			fi
-		else
-			: # Should not happen - Here for completeness
 		fi
 	# EOF
 	#
@@ -890,7 +869,7 @@ function state_MAYBE_TXT_BLOCK() {
 	# Discard saved state and process saved lines
 	#
 	pop_statement_indent
-	peek_state
+	pop_state
 	# Text blocks can be nested, so save lines and cleanup *before* processing
 	#
 	local lines=("${TEXT_BLOCK_LINES[@]}")
@@ -898,7 +877,9 @@ function state_MAYBE_TXT_BLOCK() {
 	#
 	TEXT_BLOCK_LINES=()
 	TEXT_BLOCK_LINES_INDENT=""
-	# Process saved lines now in new state
+	TEXT_BLOCK_LINES_INDENT_SET=""
+	# Process saved lines now in parent context
+	# TODO "push" these back onto primary line-processing stream?
 	#
 	local line
 	for line in "${lines[@]}"; do
@@ -908,6 +889,14 @@ function state_MAYBE_TXT_BLOCK() {
 
 ##
 # state_TXT_BLOCK
+# NOTE: Assumes
+#    Called within MAYBE_TXT_BLOCK with a complete block to process
+#    Will NOT be called with TXT Block Close
+#    Every line has a minimum indentation of BLOCK_INDENT
+#    push_state TXT_BLOCK
+#    push_text_indent
+#    push_statement_indent
+#    push_block_indent
 #
 function state_TXT_BLOCK() {
 	# EOF
@@ -916,196 +905,172 @@ function state_TXT_BLOCK() {
 		# End of text block
 		# Discard saved state
 		#
-		pop_statement_indent
 		pop_text_indent
-		pop_print_indent
+		pop_statement_indent
+		pop_block_indent
 		pop_state
-		peek_state
 	# Current line is empty
 	#
 	elif [[ "${1}" == "" ]]; then
-		peek_text_indent
-		print_text "${TEXT_INDENT}" ""
+		process_tags "${BLOCK_INDENT}" ""
 	# Current line is a statement
 	#
 	elif [[ "${1}" =~ $STATEMENT_REGEX ]]; then
-		peek_statement_indent
-		# Current statement is at same level as block-start statement
-		#
-		if [[ "${BASH_REMATCH[1]}" == "${STATEMENT_INDENT}" ]]; then
-			# End of text block
-			# Discard saved state
-			#
-			pop_statement_indent
-			pop_text_indent
-			pop_print_indent
-			pop_state
-			peek_state
-			# Print current statement
-			#
-			print_statement_indent "${BASH_REMATCH[1]}"
-			print_statement "${BASH_REMATCH[2]}"
-			# Current statement is Maybe a TXT Block
-			#
-			push_statement_indent "${BASH_REMATCH[1]}"
-			STATE="MAYBE_TXT_BLOCK"
-		# Current statement is indented
-		#
-		elif [[ "${BASH_REMATCH[1]}" == "${STATEMENT_INDENT}"* && ${#BASH_REMATCH[1]} -gt ${#STATEMENT_INDENT} ]]; then
-			# Print current statement
-			#
-			print_statement_indent "${BASH_REMATCH[1]}"
-			print_statement "${BASH_REMATCH[2]}"
-			# Current statement is Maybe a TXT Block
-			#
-			push_statement_indent "${BASH_REMATCH[1]}"
-			STATE="MAYBE_TXT_BLOCK"
-		# Current statement is NOT indented
-		#
-		else
-			# Print leading indentation as-is
-			# Do NOT treat statement as a MAYBE TEXT BlOCK
-			#
-			print_statement "${BASH_REMATCH[2]}"
-		fi
-	# Current line is a STMT Start Block
+		print_statement "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+		push_statement_indent "${BASH_REMATCH[1]}"
+		push_state "MAYBE_TXT_BLOCK"
+	# Current line is a statement Start Block
 	#
 	elif [[ "${1}" =~ $STATEMENT_BLOCK_START_REGEX ]]; then
 		push_statement_indent "${BASH_REMATCH[1]}"
-		STATE="START_STMT_BLOCK"
+		push_state "START_STMT_BLOCK"
 	# Current line is a directive
 	#
 	elif [[ "${1}" =~ $DIRECTIVE_REGEX ]]; then
-		peek_statement_indent
-		# Process directive
-		#
 		process_directive "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}"
 	# Line is a comment
 	#
 	elif [[ "${1}" =~ $COMMENT_REGEX ]]; then
 		: # Comments do not generate output
 	# Line is text
+	# NOTE: Regex always matches
 	#
 	elif [[ "${1}" =~ $TEXT_REGEX ]]; then
-		peek_statement_indent
-		# Text is indented
-		#
-		if [[ "${BASH_REMATCH[1]}" == "${STATEMENT_INDENT}"* && ${#BASH_REMATCH[1]} -gt ${#STATEMENT_INDENT} ]]; then
-			# Adjust and print
-			#
-			print_text "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
-		# Text is NOT indented
-		#
-		else
-			# Print leading indentation as-is
-			#
-			print_statement_indent "${BASH_REMATCH[1]}"
-			process_tags "${1}"
-		fi
+		print_text "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
 	fi
 }
 
 STATEMENT_BLOCK_LINES=()
 STATEMENT_BLOCK_LINES_INDENT=""
+STATEMENT_BLOCK_LINES_INDENT_STATE=""
 
 ##
 # state_START_STMT_BLOCK
+# NOTE: Assumes
+#    push_state "START_STMT_BLOCK"
+#    push_statement_indent
 #
 function state_START_STMT_BLOCK() {
-	# If there's a line to process (ie. not EOF)
+	# If there's a line to process (i.e. not EOF)
 	#
 	if [[ ${#@} -gt 0 ]]; then
-		# Save line to process later
-		#
-		STATEMENT_BLOCK_LINES+=("${1}")
-		peek_statement_indent
 		# Current line is empty
 		# Considered statement block content,
 		# but doesn't contribute to indentation tracking
 		#
 		if [[ "${1}" == "" ]]; then
-			return # Line already saved
+			STATEMENT_BLOCK_LINES+=("${1}") # Save line
+			return
 		# Current line is a statement block end
 		#
 		elif [[ "${1}" =~ $STATEMENT_BLOCK_STOP_REGEX ]]; then
-			# We've saved a FULL statement block !
-			# Use computed indentation
-			# NOTE: Statement block end (+ cleanup) will be processed by handler state
+			# If indentation does not match block-open, then error
+			# TODO Track line numbers for better reporting
 			#
-			push_text_indent "${STATEMENT_BLOCK_LINES_INDENT}"
-			push_print_indent "${STATEMENT_INDENT}"
+			if [[ "${BASH_REMATCH[1]}" != "${STATEMENT_INDENT}" ]]; then
+				echo "Error: stmt-block close indentation does not match open" >&2
+				exit 1
+			fi
+			# We've saved a FULL statement block !
+			# Is it fully indented?
+			#
+			if [[ "${STATEMENT_BLOCK_LINES_INDENT_STATE}" == "1" ]]; then
+				# Use computed indentation
+				#
+				push_text_indent "${TEXT_INDENT}${STATEMENT_INDENT/#$BLOCK_INDENT/}" # Additive
+				push_block_indent "${STATEMENT_BLOCK_LINES_INDENT}"
+			else
+				# If not consistently indented, default to no indent
+				# TODO Print warning?
+				#
+				push_text_indent ""
+				pop_statement_indent
+				push_statement_indent ""
+				push_block_indent ""
+			fi
+			# Process the saved lines
+			# NOTE: Statement block end (+ cleanup) will be processed by STMT_BLOCK handler
+			#
+			pop_state
+			push_state "STMT_BLOCK"
+			# Process saved lines now in new state
+			# Statement blocks do not nest, so we use global and cleanup *after*
+			#
+			local line
+			for line in "${STATEMENT_BLOCK_LINES[@]}"; do
+				process_line "${line}"
+			done
+			# Clean up our STMT_BLOCK state
+			#
+			process_line # EOF
+			# Clean up
+			#
+			STATEMENT_BLOCK_LINES=()
+			STATEMENT_BLOCK_LINES_INDENT=""
+			STATEMENT_BLOCK_LINES_INDENT_STATE=""
 		# Capture line indentation for tracking
 		# TEXT_REGEX is perfect for this, so just re-use it
+		# NOTE: Regex always matches
 		#
 		elif [[ "${1}" =~ $TEXT_REGEX ]]; then
-			# If current line is indented
+			STATEMENT_BLOCK_LINES+=("${1}") # Save line
+			# If current line is indented (or even)
 			#
-			if [[ "${BASH_REMATCH[1]}" != "${STATEMENT_INDENT}" && "${BASH_REMATCH[1]}" == "${STATEMENT_INDENT}"* ]]; then
+			if [[ "${BASH_REMATCH[1]}" == "${STATEMENT_INDENT}"* ]]; then
 				# If first time through
 				#
-				if [[ "${STATEMENT_BLOCK_LINES_INDENT}" == "" ]]; then
+				if [[ "${STATEMENT_BLOCK_LINES_INDENT_STATE}" == "" ]]; then
 					# Track current indentation
 					#
 					STATEMENT_BLOCK_LINES_INDENT="${BASH_REMATCH[1]}"
-					return
-				# If current line is indented SAME OR LESS than tracked
+					STATEMENT_BLOCK_LINES_INDENT_STATE="1"
+				# If still working with fully indented block
 				#
-				elif [[ "${STATEMENT_BLOCK_LINES_INDENT}" == "${BASH_REMATCH[1]}"* ]]; then
-					# Update tracked indentation (may set to same value)
+				elif [[ "${STATEMENT_BLOCK_LINES_INDENT_STATE}" == "1" ]]; then
+					# If current line is indented SAME OR LESS than tracked
 					#
-					STATEMENT_BLOCK_LINES_INDENT="${BASH_REMATCH[1]}"
-					return
-				# If current line is indented MORE than tracked
-				#
-				elif [[ "${BASH_REMATCH[1]}" == "${STATEMENT_BLOCK_LINES_INDENT}"* ]]; then
-					# No change
+					if [[ "${STATEMENT_BLOCK_LINES_INDENT}" == "${BASH_REMATCH[1]}"* ]]; then
+						# Update tracked indentation (may set to same value)
+						#
+						STATEMENT_BLOCK_LINES_INDENT="${BASH_REMATCH[1]}"
+					# If current line is indented MORE than tracked
 					#
-					return
-				# Neither line is a subset of the other
-				#
-				else
-					: # Here for completeness
+					elif [[ "${BASH_REMATCH[1]}" == "${STATEMENT_BLOCK_LINES_INDENT}"* ]]; then
+						# No change
+						#
+						:
+					# Neither line is a subset of the other
+					#
+					else
+						STATEMENT_BLOCK_LINES_INDENT_STATE="2"
+					fi
 				fi
-			# Current line is NOT indented
+			# Current line is NOT indented (or even)
 			#
 			else
-				: # Here for completeness
+				STATEMENT_BLOCK_LINES_INDENT_STATE="3"
 			fi
-			# If we get here, we're defaulting to base indent
-			#
-			push_text_indent "${STATEMENT_INDENT}"
-			push_print_indent "${STATEMENT_INDENT}"
-		else
-			# Should not happen - Here for completeness
-			#
-			push_text_indent "${STATEMENT_INDENT}"
-			push_print_indent "${STATEMENT_INDENT}"
 		fi
 	# EOF
 	#
 	else
-		push_text_indent "${STATEMENT_INDENT}"
-		push_print_indent "${STATEMENT_INDENT}"
+		# EOF before close block reached is an error
+		# TODO Track line numbers for better reporting
+		#
+		echo "Error: Missing stmt-block close ('${STMT_BLOCK_STOP_DELIM}')" >&2
+		exit 1
 	fi
-	# If we haven't returned by now, process the saved lines
-	#
-	push_state "STMT_BLOCK"
-	peek_state
-	# Process saved lines now in new state
-	# Statement blocks do not nest, so we use global and cleanup *after*
-	#
-	local line
-	for line in "${STATEMENT_BLOCK_LINES[@]}"; do
-		process_line "${line}"
-	done
-	# Clean up
-	#
-	STATEMENT_BLOCK_LINES=()
-	STATEMENT_BLOCK_LINES_INDENT=""
 }
 
 ##
 # state_STMT_BLOCK
+# NOTE: Assumes
+#    Called within START_STMT_BLOCK with a complete block to process
+#    Will NOT be called with STMT Block Close
+#    push_state STMT_BLOCK
+#    push_text_indent
+#    push_statement_indent
+#    push_block_indent
 #
 function state_STMT_BLOCK() {
 	# EOF
@@ -1114,63 +1079,26 @@ function state_STMT_BLOCK() {
 		# End of statement block
 		# Discard saved state
 		#
-		pop_statement_indent
 		pop_text_indent
-		pop_print_indent
+		pop_statement_indent
+		pop_block_indent
 		pop_state
-		peek_state
 	# Current line is empty
 	#
 	elif [[ "${1}" == "" ]]; then
-		print_statement ""
-	# Current line is a statement block end
-	#
-	elif [[ "${1}" =~ $STATEMENT_BLOCK_STOP_REGEX ]]; then
-		# End of statement block
-		# Discard saved state
+		# TODO Do we need a flag to print BASE_STMT_INDENT when included?
 		#
-		pop_statement_indent
-		pop_text_indent
-		pop_print_indent
-		pop_state
-		peek_state
+		printf "\n"
 	# Line is text
 	#
 	elif [[ "${1}" =~ $STATEMENT_BLOCK_TEXT_REGEX ]]; then
-		peek_statement_indent
-		# Text is indented (or even)
-		#
-		if [[ "${BASH_REMATCH[1]}" == "${STATEMENT_INDENT}"* ]]; then
-			# Adjust and print
-			#
-			print_statement_block_text "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
-		# Statement is NOT indented (or even)
-		#
-		else
-			# Print leading indentation as-is
-			#
-			print_text "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
-		fi
+		print_text "${BLOCK_INDENT}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[1]}"
 	# Line is assumed to be a statement
 	# TEXT_REGEX is perfect for this, so just re-use it
+	# NOTE: Regex always matches
 	#
 	elif [[ "${1}" =~ $TEXT_REGEX ]]; then
-		peek_statement_indent
-		# Statement is indented (or even)
-		#
-		if [[ "${BASH_REMATCH[1]}" == "${STATEMENT_INDENT}"* ]]; then
-			# Adjust and print
-			#
-			print_statement_block_indent "${BASH_REMATCH[1]}"
-			print_statement "${BASH_REMATCH[2]}"
-		# Statement is not indented (or even)
-		#
-		else
-			# Print leading indentation as-is
-			#
-			print_statement_indent "${BASH_REMATCH[1]}"
-			print_statement "${BASH_REMATCH[2]}"
-		fi
+		print_statement "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
 	fi
 }
 
@@ -1235,7 +1163,7 @@ function parse_args() {
 				;;
 			-o | --output-file)
 				if [ -n "${2}" ]; then
-					OUPUT_FILE="${2}"
+					OUTPUT_FILE="${2}"
 				else
 					echo "Error: Invalid or missing value for --output-file: '${2}'" >&2
 					exit 1
@@ -1276,12 +1204,16 @@ function parse_args() {
 				parse_comment_delim "$2" "$1"
 				shift 2
 				;;
+			--text-indent)
+				BASE_TEXT_INDENT="${2}"
+				shift 2
+				;;
 			--stmt-indent)
 				BASE_STMT_INDENT="${2}"
 				shift 2
 				;;
-			--text-indent)
-				BASE_TEXT_INDENT="${2}"
+			--block-indent)
+				BASE_BLOCK_INDENT="${2}"
 				shift 2
 				;;
 			-)
@@ -1309,10 +1241,11 @@ function parse_args() {
 
 function main() {
 
-	OUPUT_FILE=""
+	OUTPUT_FILE=""
 
-	BASE_STMT_INDENT=""
 	BASE_TEXT_INDENT=""
+	BASE_STMT_INDENT=""
+	BASE_BLOCK_INDENT=""
 
 	reset_delims
 	parse_env_delims
@@ -1351,8 +1284,8 @@ function main() {
 
 	reset_template_regexes
 
-	if [[ -n "${OUPUT_FILE}" ]]; then
-		exec > "${OUPUT_FILE}"
+	if [[ -n "${OUTPUT_FILE}" ]]; then
+		exec > "${OUTPUT_FILE}"
 	fi
 
 	process_stdin

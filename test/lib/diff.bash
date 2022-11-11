@@ -13,8 +13,8 @@ diff_output() {
 	diff -a -u \
 	--suppress-common-lines \
 	--strip-trailing-cr \
-	--label=\$output <( printf "%s\n" "${output}" ) \
-	--label=EXPECTED -
+	--label=EXPECTED - \
+	--label=\$output <( printf "%s\n" "${output}" )
 }
 
 ##
@@ -28,8 +28,8 @@ diff_output_file() {
 	diff -a -u \
 	--suppress-common-lines \
 	--strip-trailing-cr \
-	--label=\$output <( printf "%s\n" "${output}" ) \
-	"${1}"
+	"${1}" \
+	--label=\$output <( printf "%s\n" "${output}" )
 }
 
 ##
@@ -44,8 +44,8 @@ diff_vars() {
 	diff -a -u \
 	--suppress-common-lines \
 	--strip-trailing-cr \
-	--label=ACTUAL   <( printf "%s" "${!1}" ) \
-	--label=EXPECTED <( printf "%s" "${!2}" )
+	--label=EXPECTED <( printf "%s" "${!2}" ) \
+	--label=ACTUAL   <( printf "%s" "${!1}" )
 }
 
 ##
@@ -60,6 +60,6 @@ diff_vals() {
 	diff -a -u \
 	--suppress-common-lines \
 	--strip-trailing-cr \
-	--label=ACTUAL   <( printf "%s" "${1}" ) \
-	--label=EXPECTED <( printf "%s" "${2}" )
+	--label=EXPECTED <( printf "%s" "${2}" ) \
+	--label=ACTUAL   <( printf "%s" "${1}" )
 }
