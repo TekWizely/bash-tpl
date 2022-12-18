@@ -690,6 +690,8 @@ Here's a list of some similar tools I discovered before deciding to create bash-
 * [cookie (written in bash)](https://github.com/bbugyi200/cookie)
 * [bash-templater](https://github.com/vicentebolea/bash-templater)
 * [renderest (written in bash)](https://github.com/relaxdiego/renderest)
+* [rc template language](https://werc.cat-v.org/docs/rc-template-lang)
+* [pp shell-based pre-processor](https://adi.onl/pp.html)
 
 ---------------
 ## Contributing
