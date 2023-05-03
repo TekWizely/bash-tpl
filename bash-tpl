@@ -1289,6 +1289,8 @@ function main() {
 	fi
 
 	process_stdin
+
+	return 0 # ALL OK
 }
 
 # Only process main logic if not being sourced (ie tested)
