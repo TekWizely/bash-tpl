@@ -17,6 +17,7 @@ printf "%s\n" \#
 printf "%s\n" test_template\(\)\ \{
 printf "%s\n" $'\tpushd "${BATS_TEST_DIRNAME}" >> /dev/null'
 printf "%s\n" $'\trun main "${BATS_TEST_DIRNAME}/${1}"'
+printf "%s\n" $'\t[[ $status = 0 ]]'
 printf "%s\n" $'\tdiff_output_file "${BATS_TEST_DIRNAME}/${1%.tpl}.sh"'
 printf "%s\n" $'\tpopd >> /dev/null'
 printf "%s\n" \}

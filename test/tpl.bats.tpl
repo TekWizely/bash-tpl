@@ -19,6 +19,7 @@ setup() {
 test_template() {
 	pushd "${BATS_TEST_DIRNAME}" >> /dev/null
 	run main "${BATS_TEST_DIRNAME}/${1}"
+	[[ $status = 0 ]]
 	diff_output_file "${BATS_TEST_DIRNAME}/${1%.tpl}.sh"
 	popd >> /dev/null
 }
