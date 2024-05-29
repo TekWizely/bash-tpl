@@ -272,7 +272,7 @@ function reset_template_regexes() {
 
 	d="${DIRECTIVE_DELIM}"
 	escape_regex d
-	DIRECTIVE_REGEX="^([[:blank:]]*)${d}([a-zA-Z_-]+)(.*)\$"
+	DIRECTIVE_REGEX="^([[:blank:]]*)${d}([a-zA-Z_-]+\??)(.*)\$"
 
 	d="${COMMENT_DELIM}"
 	escape_regex d
@@ -587,7 +587,11 @@ function process_directive() {
 	directive="${2}"
 	normalize_directive directive
 	case "${directive}" in
-		INCLUDE)
+		INCLUDE | INCLUDE\?)
+			local file_not_found_ok=""
+			if [ "${directive}" = "INCLUDE?" ]; then
+				file_not_found_ok="1"
+			fi
 			local indent="${1}"
 			if [[ "${indent}" == "${BLOCK_INDENT}"* ]]; then
 				indent="${indent/#$BLOCK_INDENT/}"
@@ -608,6 +612,7 @@ function process_directive() {
 				--txt-delim "${TEXT_DELIM}" \
 				--dir-delim "${DIRECTIVE_DELIM}" \
 				--cmt-delim "${COMMENT_DELIM}" \
+				${file_not_found_ok:+'--file-not-found-ok'} \
 				"${args_arr[@]}"
 			;;
 		DELIMS)
@@ -1216,6 +1221,10 @@ function parse_args() {
 				BASE_BLOCK_INDENT="${2}"
 				shift 2
 				;;
+			--file-not-found-ok) # internal flag to support .INCLUDE?
+				FILE_NOT_FOUND_OK=1
+				shift
+				;;
 			-)
 				__ARGS+=("$1")
 				shift
@@ -1250,6 +1259,11 @@ function main() {
 	reset_delims
 	parse_env_delims
 
+	FILE_NOT_FOUND_OK=""
+	if [ -n "${BASH_TPL_FILE_NOT_FOUND_OK}" ]; then
+		FILE_NOT_FOUND_OK="1"
+	fi
+
 	parse_args "$@"
 	set -- "${__ARGS[@]}"
 	unset __ARGS
@@ -1272,8 +1286,13 @@ function main() {
 			# File argument points to non-existing/readable file
 			#
 			if [[ ! -r "${1}" ]]; then
-				echo "File not found: '${1}'" >&2
-				exit 1
+				if [ -z "${FILE_NOT_FOUND_OK}" ]; then
+					echo "File not found: '${1}'" >&2
+					exit 1
+				else
+					# Fail silently, no message, no error code
+					exit 0
+				fi
 			fi
 			# File argument is good, re-route it to stdin
 			#

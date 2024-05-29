@@ -489,6 +489,15 @@ ARGS:
   - d
 ```
 
+**Support for potentially-missing files**
+
+You can safely attempt to include a potentially-missing file using `.INCLUDE?`
+
+_no errors if include file is missing_
+```
+.INCLUDE? optional-file.tpl
+```
+
 **NOTES:**
 * The current delimiter configuration is passed to the included template
 * You can pass command-line options (i.e `--tag-delims`, `--reset-delims`, etc)

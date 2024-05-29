@@ -7,7 +7,9 @@ exec > tpl.bats
 #
 
 setup() {
+	bats_require_minimum_version 1.7.0
 	load ../lib/diff
+	# shellcheck source=../../bash-tpl
 	source "${BATS_TEST_DIRNAME}/../../bash-tpl"
 }
 
@@ -18,9 +20,17 @@ setup() {
 #
 test_template() {
 	pushd "${BATS_TEST_DIRNAME}" >> /dev/null
-	run main "${BATS_TEST_DIRNAME}/${1}"
+	local separate_stderr=
+	# Does test include check for stderr?
+	if [ -f  "${BATS_TEST_DIRNAME}/${1%.tpl}.stderr" ]; then
+		separate_stderr='--separate-stderr'
+	fi
+	run ${separate_stderr} -- main "${BATS_TEST_DIRNAME}/${1}"
 	[[ $status = 0 ]]
 	diff_output_file "${BATS_TEST_DIRNAME}/${1%.tpl}.sh"
+	if [ "${output_type}" = "separate" ]; then
+		diff_stderr_file "${BATS_TEST_DIRNAME}/${1%.tpl}.stderr"
+	fi
 	popd >> /dev/null
 }
 % _fix_nullglob=$(shopt -p nullglob || true)
