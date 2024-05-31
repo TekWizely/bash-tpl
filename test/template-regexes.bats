@@ -1,5 +1,7 @@
 
 setup() {
+	bats_require_minimum_version 1.7.0
+	# shellcheck source=../bash-tpl
 	source "${BATS_TEST_DIRNAME}/../bash-tpl"
 }
 

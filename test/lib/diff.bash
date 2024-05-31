@@ -1,5 +1,5 @@
 ###############################################################################
-# Diff Hepers
+# Diff Helpers
 # Compare values using diff to get contextual feedback on failure
 ###############################################################################
 
@@ -18,7 +18,7 @@ diff_output() {
 }
 
 ##
-# diff_output - Diffs $output against specified file
+# diff_output_file - Diffs $output against specified file
 # $1 = file containing expected content
 #
 # example:
@@ -30,6 +30,21 @@ diff_output_file() {
 	--strip-trailing-cr \
 	"${1}" \
 	--label=\$output <( printf "%s\n" "${output}" )
+}
+
+##
+# diff_stderr_file - Diffs $stderr against specified file
+# $1 = file containing expected content
+#
+# example:
+#  diff_stderr_file "/path/to/file"
+#
+diff_stderr_file() {
+	diff -a -u \
+	--suppress-common-lines \
+	--strip-trailing-cr \
+	"${1}" \
+	--label=\$stderr <( printf "%s\n" "${stderr}" )
 }
 
 ##
