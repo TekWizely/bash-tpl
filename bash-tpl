@@ -558,7 +558,7 @@ function process_tags() {
 	done
 	local stmt
 	if [ -n "${args}" ]; then
-		printf -v stmt "printf \"%%s\\\\n\" %s" "${args}"
+		printf -v stmt "printf \"%%b\\\\n\" %s" "${args}"
 	else
 		printf -v stmt "printf \"\\\\n\""
 	fi

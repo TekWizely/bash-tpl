@@ -1,2 +1,2 @@
-printf "%s\n" before
-printf "%s\n" after
+printf "%b\n" before
+printf "%b\n" after
