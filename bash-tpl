@@ -352,14 +352,14 @@ function escape_string {
 	# Escape '\' first since we'll be adding more later
 	local e="${!1//$'\\'/\\}"
 	# Some man pages mention \0NNN but in practice it seems \NNN is used
-	e="${e//\'/'\0047'}"
-	e="${e//$'\a'/'\a'}"
-	e="${e//$'\b'/'\b'}"
-	e="${e//$'\f'/'\f'}"
-	e="${e//$'\n'/'\n'}"
-	e="${e//$'\r'/'\r'}"
-	e="${e//$'\t'/'\t'}"
-	e="${e//$'\v'/'\v'}"
+	e="${e//\'/\\0047}"
+	e="${e//$'\a'/\\a}"
+	e="${e//$'\b'/\\b}"
+	e="${e//$'\f'/\\f}"
+	e="${e//$'\n'/\\n}"
+	e="${e//$'\r'/\\r}"
+	e="${e//$'\t'/\\t}"
+	e="${e//$'\v'/\\v}"
 	printf -v "${1}" "'%s'" "${e}"
 }
 
