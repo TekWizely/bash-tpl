@@ -2,6 +2,7 @@
 #
 /*.tpl
 /*.sh
+/*.bash
 
 # auto-generated tpl.bats
 #
