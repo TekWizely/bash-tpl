@@ -1,1 +1,1 @@
-printf "%b\n" Hello\,\ world
+printf "%b\n" 'Hello, world'

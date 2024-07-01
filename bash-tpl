@@ -343,6 +343,25 @@ function reset_template_regexes() {
 function trim() {
 	read -r "$1" <<< "${!1}"$'\n'
 }
+##
+# escape_string
+# Escapes value compatible with posix `printf %b`
+# usage: escape_string varname
+#
+function escape_string {
+	# Escape '\' first since we'll be adding more later
+	local e="${!1//$'\\'/\\}"
+	# Some man pages mention \0NNN but in practice it seems \NNN is used
+	e="${e//\'/'\0047'}"
+	e="${e//$'\a'/'\a'}"
+	e="${e//$'\b'/'\b'}"
+	e="${e//$'\f'/'\f'}"
+	e="${e//$'\n'/'\n'}"
+	e="${e//$'\r'/'\r'}"
+	e="${e//$'\t'/'\t'}"
+	e="${e//$'\v'/'\v'}"
+	printf -v "${1}" "'%s'" "${e}"
+}
 
 ##
 # escape_regex
@@ -525,7 +544,9 @@ function process_tags() {
 		# echo "# LINE @ START: $(declare -p line)" >&2
 		if [[ "${line}" =~ $TAG_TEXT_REGEX ]]; then
 			# echo "# TEXT TAG MATCH: $(declare -p BASH_REMATCH)" >&2
-			printf -v quoted "%q" "${BASH_REMATCH[1]}"
+			quoted="${BASH_REMATCH[1]}"
+			escape_string quoted
+			#printf -v quoted "%q" "${BASH_REMATCH[1]}"
 			args="${args}${quoted}"
 			line="${BASH_REMATCH[2]}"
 		elif [[ "${line}" =~ $TAG_QUOTE_REGEX ]]; then
@@ -550,7 +571,9 @@ function process_tags() {
 		#
 		elif [[ "${line}" =~ (.)(.*) ]]; then
 			# echo "# DEFAULT: Assuming first char is TEXT: $(declare -p line)"
-			printf -v quoted "%q" "${BASH_REMATCH[1]}"
+			quoted="${BASH_REMATCH[1]}"
+			escape_string quoted
+			#printf -v quoted "%q" "${BASH_REMATCH[1]}"
 			args="${args}${quoted}"
 			line="${BASH_REMATCH[2]}"
 		fi
