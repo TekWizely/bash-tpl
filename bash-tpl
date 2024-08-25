@@ -536,10 +536,11 @@ function print_text() {
 # $2 = full line of text to process
 #
 function process_tags() {
-	local stmt_indent line args arg quoted
+	local stmt_indent line formats args arg quoted
 	stmt_indent="${1}"
 	line="${2}"
-	args=""
+	formats=""
+	args=()
 	while [ -n "${line}" ]; do
 		# echo "# LINE @ START: $(declare -p line)" >&2
 		if [[ "${line}" =~ $TAG_TEXT_REGEX ]]; then
@@ -547,17 +548,20 @@ function process_tags() {
 			quoted="${BASH_REMATCH[1]}"
 			escape_string quoted
 			#printf -v quoted "%q" "${BASH_REMATCH[1]}"
-			args="${args}${quoted}"
+			formats="${formats}%b"
+			args+=("${quoted}")
 			line="${BASH_REMATCH[2]}"
 		elif [[ "${line}" =~ $TAG_QUOTE_REGEX ]]; then
 			# echo "# QUOTE TAG MATCH: $(declare -p BASH_REMATCH)" >&2
-			args="${args}\"${BASH_REMATCH[1]}\""
+			formats="${formats}%s"
+			args+=("\"${BASH_REMATCH[1]}\"")
 			line="${BASH_REMATCH[6]}"
 		elif [[ "${line}" =~ $TAG_STATEMENT_REGEX ]]; then
 			# echo "# STMT TAG MATCH: $(declare -p BASH_REMATCH)" >&2
 			arg="${BASH_REMATCH[1]}"
 			trim arg
-			args="${args}\"\$(${arg})\""
+			formats="${formats}%s"
+			args+=("\"\$(${arg})\"")
 			line="${BASH_REMATCH[5]}"
 		# Check standard regex last as it's a super-set of quote and stmt regex
 		#
@@ -565,7 +569,8 @@ function process_tags() {
 			# echo "# STD TAG MATCH: $(declare -p BASH_REMATCH)" >&2
 			arg="${BASH_REMATCH[1]}"
 			trim arg
-			args="${args}\"${arg}\""
+			formats="${formats}%s"
+			args+=("\"${arg}\"")
 			line="${BASH_REMATCH[5]}"
 		# Assume next character is TEXT - extract and process remainder
 		#
@@ -574,14 +579,15 @@ function process_tags() {
 			quoted="${BASH_REMATCH[1]}"
 			escape_string quoted
 			#printf -v quoted "%q" "${BASH_REMATCH[1]}"
-			args="${args}${quoted}"
+			formats="${formats}%b"
+			args+=("${quoted}")
 			line="${BASH_REMATCH[2]}"
 		fi
 		# echo "# LINE @ END: $(declare -p line)" >&2
 	done
 	local stmt
-	if [ -n "${args}" ]; then
-		printf -v stmt "printf \"%%b\\\\n\" %s" "${args}"
+	if [[ ${#args[@]} -gt 0 ]]; then
+		printf -v stmt "printf \"%s\\\\n\" %s" "${formats}" "${args[*]}"
 	else
 		printf -v stmt "printf \"\\\\n\""
 	fi

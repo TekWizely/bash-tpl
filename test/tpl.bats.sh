@@ -37,8 +37,8 @@ _fix_nullglob=$(shopt -p nullglob || true)
 shopt -s nullglob
 for tpl in *.tpl; do
 	printf "\n"
-	printf "%b\n" '@test "tpl: Should render test/tpl/'"$tpl"' to match test/tpl/'"${tpl%.tpl}.sh"' {'
-	printf "%b\n" '\ttest_template "'"$tpl"'"'
+	printf "%b%s%b%s%b\n" '@test "tpl: Should render test/tpl/' "$tpl" ' to match test/tpl/' "${tpl%.tpl}.sh" ' {'
+	printf "%b%s%b\n" '\ttest_template "' "$tpl" '"'
 	printf "%b\n" '}'
 done
 eval "${_fix_nullglob}"

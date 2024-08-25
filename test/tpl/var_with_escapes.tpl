@@ -1,0 +1,2 @@
+% myvar="\tHello\nWorld"
+<% $myvar %>
