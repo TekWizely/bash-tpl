@@ -34,10 +34,16 @@ If desired, you could just bring/ship the intermediate script, with no further n
 
 The shell scripts that Bash-TPL generates are not intended to be Bash-specific.
 
-Any shell that can process the following statement should be compatible:
+Bash-TPL attempts to generate posix printf-compatible statements, utilizing `%s` and `%b`.
 
-```
-printf "%s\n" Plain\ text\,\ "$VARIABLE"\,\ "$(echo subshell)"
+Any shell who's printf matches output below should be compatible:
+
+```sh
+$ VARIABLE=variable
+$ printf "%b%s%b%s%s\n" 'VARIABLE:\t' "$VARIABLE" '\n' "VARIABLE:\t" "$(echo $VARIABLE)"
+
+VARIABLE:       variable
+VARIABLE:\tvariable
 ```
 
 ##### Supports Includes

@@ -351,7 +351,7 @@ function trim() {
 function escape_string {
 	# Escape '\' first since we'll be adding more later
 	local e="${!1//$'\\'/\\}"
-	# Some man pages mention \0NNN but in practice it seems \NNN is used
+	# Some man pages mention \0NNN but in practice it seems \NNN is also works.
 	e="${e//\'/\\0047}"
 	e="${e//$'\a'/\\a}"
 	e="${e//$'\b'/\\b}"
