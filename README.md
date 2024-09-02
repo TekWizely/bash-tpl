@@ -39,11 +39,11 @@ Bash-TPL attempts to generate posix printf-compatible statements, utilizing `%s`
 Any shell who's printf matches output below should be compatible:
 
 ```sh
-$ VARIABLE=variable
-$ printf "%b%s%b%s%s\n" 'VARIABLE:\t' "$VARIABLE" '\n' "VARIABLE:\t" "$(echo $VARIABLE)"
-
-VARIABLE:       variable
-VARIABLE:\tvariable
+$ VARIABLE=Variable
+$ printf "%b%s%b%s%b\n" 'Text:\t\0047' "$VARIABLE" '\0047 "' "$(echo $VARIABLE)" '" $(\\n)'
+```
+```text
+Text:	'Variable' "Variable" $(\n)
 ```
 
 ##### Supports Includes
