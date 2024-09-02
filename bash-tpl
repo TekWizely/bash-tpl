@@ -352,6 +352,7 @@ function escape_string {
 	# Escape '\' first since we'll be adding more later
 	local e="${!1//$'\\'/\\}"
 	# Some man pages mention \0NNN but in practice it seems \NNN is also works.
+	e="${e//\\/\\\\}"
 	e="${e//\'/\\0047}"
 	e="${e//$'\a'/\\a}"
 	e="${e//$'\b'/\\b}"
@@ -575,7 +576,7 @@ function process_tags() {
 		# Assume next character is TEXT - extract and process remainder
 		#
 		elif [[ "${line}" =~ (.)(.*) ]]; then
-			# echo "# DEFAULT: Assuming first char is TEXT: $(declare -p line)"
+			# echo "# DEFAULT: Assuming first char is TEXT: $(declare -p line)" >&2
 			quoted="${BASH_REMATCH[1]}"
 			escape_string quoted
 			#printf -v quoted "%q" "${BASH_REMATCH[1]}"
