@@ -196,7 +196,7 @@ _process the template_
 ```
 $ bash-tpl hello.tpl
 
-printf "%s\n" Hello\ "$NAME"
+printf "%b%s\n" 'Hello ' "$NAME"
 ```
 
 #### Usage Example
@@ -233,7 +233,7 @@ Hello <%" $NAME "%>
 Is equivalent to :
 
 ```
-printf "%s\n" Hello\ " $NAME "  # Whitespace around $NAME is preserved
+printf "%b%s\n" 'Hello ' " $NAME "  # Whitespace around $NAME is preserved
 ```
 
 ##### Default Delimiters
@@ -268,7 +268,7 @@ Hello <%% echo $NAME %>
 Is equivalent to :
 
 ```
-printf "%s\n" Hello\ "$(echo $NAME)"  # Trivial example to demonstrate the conversion
+printf "%b%s\n" 'Hello ' "$(echo $NAME)"  # Trivial example to demonstrate the conversion
 ```
 
 ##### Better Example
@@ -404,7 +404,7 @@ _inline.tpl_
 **NOTES:**
 * The indentation of the printed text lines will always match that of the statement block start tag
 * This is to encourage you to format your text lines within the context of your script
-* All whitespce _after_ the text line tag (`'% `') will be printed as-as
+* All whitespace _after_ the text line tag (`'% `') will be printed as-as
 
 ##### Similar Script Output
 
@@ -414,9 +414,9 @@ _verbose.sh_
 ```bash
 # ...
 if (condition); then
-printf "%s\n" condition\ text\ ...
+printf "%b\n" 'condition text ...'
 else
-printf "%s\n" else\ text\ ...
+printf "%b\n" 'else text ...'
 fi
 # ...
 ```
@@ -425,9 +425,9 @@ _inline.sh_
 ```bash
 # ...
 if (condition); then
-    printf "%s\n" condition\ text\ ...
+    printf "%b\n" 'condition text ...'
 else
-    printf "%s\n" else\ text\ ...
+    printf "%b\n" 'else text ...'
 fi
 # ...
 ```
@@ -453,7 +453,7 @@ _view raw template script_
 $ bash-tpl test.tpl
 
 # This comment will remain as part of the template script
-printf "%s\n" Hello\ world
+printf "%b\n" 'Hello world'
 ```
 
 _invoke template script_
