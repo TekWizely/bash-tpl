@@ -343,6 +343,26 @@ function reset_template_regexes() {
 function trim() {
 	read -r "$1" <<< "${!1}"$'\n'
 }
+##
+# escape_string
+# Escapes value compatible with posix `printf %b`
+# usage: escape_string varname
+#
+function escape_string {
+	# Escape '\' first since we'll be adding more later
+	local e="${!1//$'\\'/\\}"
+	# Some man pages mention \0NNN but in practice it seems \NNN is also works.
+	e="${e//\\/\\\\}"
+	e="${e//\'/\\0047}"
+	e="${e//$'\a'/\\a}"
+	e="${e//$'\b'/\\b}"
+	e="${e//$'\f'/\\f}"
+	e="${e//$'\n'/\\n}"
+	e="${e//$'\r'/\\r}"
+	e="${e//$'\t'/\\t}"
+	e="${e//$'\v'/\\v}"
+	printf -v "${1}" "'%s'" "${e}"
+}
 
 ##
 # escape_regex
@@ -517,26 +537,32 @@ function print_text() {
 # $2 = full line of text to process
 #
 function process_tags() {
-	local stmt_indent line args arg quoted
+	local stmt_indent line formats args arg quoted
 	stmt_indent="${1}"
 	line="${2}"
-	args=""
+	formats=""
+	args=()
 	while [ -n "${line}" ]; do
 		# echo "# LINE @ START: $(declare -p line)" >&2
 		if [[ "${line}" =~ $TAG_TEXT_REGEX ]]; then
 			# echo "# TEXT TAG MATCH: $(declare -p BASH_REMATCH)" >&2
-			printf -v quoted "%q" "${BASH_REMATCH[1]}"
-			args="${args}${quoted}"
+			quoted="${BASH_REMATCH[1]}"
+			escape_string quoted
+			#printf -v quoted "%q" "${BASH_REMATCH[1]}"
+			formats="${formats}%b"
+			args+=("${quoted}")
 			line="${BASH_REMATCH[2]}"
 		elif [[ "${line}" =~ $TAG_QUOTE_REGEX ]]; then
 			# echo "# QUOTE TAG MATCH: $(declare -p BASH_REMATCH)" >&2
-			args="${args}\"${BASH_REMATCH[1]}\""
+			formats="${formats}%s"
+			args+=("\"${BASH_REMATCH[1]}\"")
 			line="${BASH_REMATCH[6]}"
 		elif [[ "${line}" =~ $TAG_STATEMENT_REGEX ]]; then
 			# echo "# STMT TAG MATCH: $(declare -p BASH_REMATCH)" >&2
 			arg="${BASH_REMATCH[1]}"
 			trim arg
-			args="${args}\"\$(${arg})\""
+			formats="${formats}%s"
+			args+=("\"\$(${arg})\"")
 			line="${BASH_REMATCH[5]}"
 		# Check standard regex last as it's a super-set of quote and stmt regex
 		#
@@ -544,21 +570,25 @@ function process_tags() {
 			# echo "# STD TAG MATCH: $(declare -p BASH_REMATCH)" >&2
 			arg="${BASH_REMATCH[1]}"
 			trim arg
-			args="${args}\"${arg}\""
+			formats="${formats}%s"
+			args+=("\"${arg}\"")
 			line="${BASH_REMATCH[5]}"
 		# Assume next character is TEXT - extract and process remainder
 		#
 		elif [[ "${line}" =~ (.)(.*) ]]; then
-			# echo "# DEFAULT: Assuming first char is TEXT: $(declare -p line)"
-			printf -v quoted "%q" "${BASH_REMATCH[1]}"
-			args="${args}${quoted}"
+			# echo "# DEFAULT: Assuming first char is TEXT: $(declare -p line)" >&2
+			quoted="${BASH_REMATCH[1]}"
+			escape_string quoted
+			#printf -v quoted "%q" "${BASH_REMATCH[1]}"
+			formats="${formats}%b"
+			args+=("${quoted}")
 			line="${BASH_REMATCH[2]}"
 		fi
 		# echo "# LINE @ END: $(declare -p line)" >&2
 	done
 	local stmt
-	if [ -n "${args}" ]; then
-		printf -v stmt "printf \"%%s\\\\n\" %s" "${args}"
+	if [[ ${#args[@]} -gt 0 ]]; then
+		printf -v stmt "printf \"%s\\\\n\" %s" "${formats}" "${args[*]}"
 	else
 		printf -v stmt "printf \"\\\\n\""
 	fi

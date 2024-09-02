@@ -31,6 +31,8 @@ test_template() {
 	if [ "${output_type}" = "separate" ]; then
 		diff_stderr_file "${BATS_TEST_DIRNAME}/${1%.tpl}.stderr"
 	fi
+	run bash "${BATS_TEST_DIRNAME}/${1%.tpl}.sh"
+	diff_output_file "${BATS_TEST_DIRNAME}/${1%.tpl}.txt"
 	popd >> /dev/null
 }
 % _fix_nullglob=$(shopt -p nullglob || true)

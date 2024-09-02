@@ -1,0 +1,5 @@
+printf "%b\n" '$Hello'
+printf "%b\n" '<$Hello'
+printf "%b%b\n" '<' '%$Hello'
+printf "%b%b\n" '<' '<$Hello'
+printf "%b\n" '%$Hello'
