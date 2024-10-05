@@ -115,6 +115,58 @@ setup() {
 	[[ "${TAG_STMT_DELIM}" == '$' ]]
 }
 
+@test "BASH_TPL_TAG_FMT_DELIMS: Should do nothing when unset or empty" {
+
+	[[ -z "${TAG_FMT_START_DELIM}" ]]
+	[[ -z "${TAG_FMT_STOP_DELIM}"  ]]
+
+	unset BASH_TPL_TAG_FMT_DELIMS
+	parse_env_delims
+
+	[[ -z "${TAG_FMT_START_DELIM}" ]]
+	[[ -z "${TAG_FMT_STOP_DELIM}"  ]]
+
+	BASH_TPL_TAG_FMT_DELIMS=''
+	parse_env_delims
+
+	[[ -z "${TAG_FMT_START_DELIM}" ]]
+	[[ -z "${TAG_FMT_STOP_DELIM}"  ]]
+}
+
+@test "BASH_TPL_TAG_FMT_DELIMS: Should error on invalid input" {
+	# No middle-space
+	#
+	BASH_TPL_TAG_FMT_DELIMS='||'
+	run parse_env_delims
+	[[ $status -eq 1 ]]
+	[[ "$output" == "Error: Invalid or missing tag fmt delimiter values for BASH_TPL_TAG_FMT_DELIMS: '||'" ]]
+
+	# All Spaces
+	#
+	BASH_TPL_TAG_FMT_DELIMS='   '
+	run parse_env_delims
+	[[ $status -eq 1 ]]
+	[[ "$output" == "Error: Invalid or missing tag fmt delimiter values for BASH_TPL_TAG_FMT_DELIMS: '   '" ]]
+}
+
+@test "BASH_TPL_TAG_FMT_DELIMS: Should process valid input" {
+
+	[[ -z "${TAG_FMT_START_DELIM}" ]]
+	[[ -z "${TAG_FMT_STOP_DELIM}"  ]]
+
+	BASH_TPL_TAG_FMT_DELIMS='a b'
+	parse_env_delims
+
+	[[ "${TAG_FMT_START_DELIM}" == 'a' ]]
+	[[ "${TAG_FMT_STOP_DELIM}"  == 'b' ]]
+
+	BASH_TPL_TAG_FMT_DELIMS='[ ]'
+	parse_env_delims
+
+	[[ "${TAG_FMT_START_DELIM}" == '[' ]]
+	[[ "${TAG_FMT_STOP_DELIM}"  == ']' ]]
+}
+
 @test "BASH_TPL_STMT_DELIM: Should do nothing when unset or empty" {
 
 	[[ -z "${STMT_DELIM}" ]]
