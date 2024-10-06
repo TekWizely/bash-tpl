@@ -609,11 +609,11 @@ The DELIMS directive accepts the following parameters:
 
 | PARAM                | FORMAT     | NOTE                                                          |
 |----------------------|------------|---------------------------------------------------------------|
-| TAG                  | `".. .."`  | two 2-char sequences, separated by a **single** space         |
+| TAG                  | `".. .."`  | 2 two-char sequences, separated by a **single** space         |
 | TAG-STMT             | `"."`      | 1 single character                                            |
 | TAG-FMT              | `". ."`    | 2 single characters, separated by a **single** space          |
 | STMT                 | `".+"`     | 1 or more characters                                          |
-| STMT-BLOCK           | `".+ .+"`  | two 1-or-more char sequences, separated by a **single** space |
+| STMT-BLOCK           | `".+ .+"`  | 2 one-or-more char sequences, separated by a **single** space |
 | TXT &#124; TEXT      | `".+[ ]?"` | 1 or more characters, with an optional trailing space         |
 | DIR &#124; DIRECTIVE | `".+"`     | 1 or more characters                                          |
 | CMT &#124; COMMENT   | `".+"`     | 1 or more characters                                          |
@@ -651,11 +651,11 @@ You can change the default delimiters globally via the following environment var
 
 | VARIABLE                   | FORMAT     | NOTE                                                          |
 |----------------------------|------------|---------------------------------------------------------------|
-| BASH_TPL_TAG_DELIMS        | `".. .."`  | two 2-char sequences, separated by a **single** space         |
+| BASH_TPL_TAG_DELIMS        | `".. .."`  | 2 two-char sequences, separated by a **single** space         |
 | BASH_TPL_TAG_STMT_DELIM    | `"."`      | 1 single character                                            |
-| BASH_TPL_TAG_FMT_DELIMS    | `". ."`    | two single characters, separated by a **single** space        |
+| BASH_TPL_TAG_FMT_DELIMS    | `". ."`    | 2 single characters, separated by a **single** space          |
 | BASH_TPL_STMT_DELIM        | `".+"`     | 1 or more characters                                          |
-| BASH_TPL_STMT_BLOCK_DELIMS | `".+ .+"`  | two 1-or-more char sequences, separated by a **single** space |
+| BASH_TPL_STMT_BLOCK_DELIMS | `".+ .+"`  | 1 one-or-more char sequences, separated by a **single** space |
 | BASH_TPL_TEXT_DELIM        | `".+[ ]?"` | 1 or more characters, with an optional trailing space         |
 | BASH_TPL_DIR_DELIM         | `".+"`     | 1 or more characters                                          |
 | BASH_TPL_CMT_DELIM         | `".+"`     | 1 or more characters                                          |
@@ -681,11 +681,11 @@ The following command line options are available for customizing delimiters:
 
 | OPTION                               | FORMAT     | NOTE                                                          |
 |--------------------------------------|------------|---------------------------------------------------------------|
-| --tag-delims                         | `".. .."`  | two 2-char sequences, separated by a **single** space         |
+| --tag-delims                         | `".. .."`  | 2 two-char sequences, separated by a **single** space         |
 | --tag-stmt-delim                     | `"."`      | 1 single character                                            |
 | --tag-fmt-delims                     | `". ."`    | 2 single characters, separated by a **single** space          |
 | --stmt-delim                         | `".+"`     | 1 or more characters                                          |
-| --stmt-block-delims                  | `".+ .+"`  | two 1-or-more char sequences, separated by a **single** space |
+| --stmt-block-delims                  | `".+ .+"`  | 2 one-or-more char sequences, separated by a **single** space |
 | --txt-delim &#124; --text-delim      | `".+[ ]?"` | 1 or more characters, with an optional trailing space         |
 | --dir-delim &#124; --directive-delim | `".+"`     | 1 or more characters                                          |
 | --cmt-delim &#124; --comment-delim   | `".+"`     | 1 or more characters                                          |
