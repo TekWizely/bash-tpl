@@ -1,0 +1,59 @@
+
+100
+100
+100
+100
+100
+  100
+00100
+64
+
+3.14159
+3.14159
+3.14159
+3.141590
+3.141590
+3.14
+0003.14
+
+one\ttwo
+one\ttwo
+one\ttwo
+one\ttwo
+one\ttwo
+            one\ttwo.
+one\ttwo            .
+one	two
+
+. one	two .
+one	two
+
+
+100
+100
+100
+100
+100
+  100
+00100
+64
+
+3.14159
+3.14159
+3.14159
+3.141590
+3.141590
+3.14
+0003.14
+
+one\ttwo
+one\ttwo
+one\ttwo
+one\ttwo
+one\ttwo
+            one\ttwo.
+one\ttwo            .
+one	two
+
+. one	two .
+one	two
