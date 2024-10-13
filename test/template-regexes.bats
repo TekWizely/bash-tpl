@@ -1395,9 +1395,12 @@ setup() {
 	[[ '<%$%>'       =~ $TAG_STATEMENT_REGEX ]]
 	[[ '<%$ %>'      =~ $TAG_STATEMENT_REGEX ]]
 	[[ '<%$  %>'     =~ $TAG_STATEMENT_REGEX ]]
+	# shellcheck disable=SC2016
 	[[ '<%$tag%>'    =~ $TAG_STATEMENT_REGEX ]]
 	[[ '<%$ tag%>'   =~ $TAG_STATEMENT_REGEX ]]
+	# shellcheck disable=SC2016
 	[[ '<%$tag %>'   =~ $TAG_STATEMENT_REGEX ]]
+	# shellcheck disable=SC2016
 	[[ '<%$ $tag %>' =~ $TAG_STATEMENT_REGEX ]]
 	[[ '<%$$ $%>'    =~ $TAG_STATEMENT_REGEX ]]
 	[[ '<%$$ $ %>'   =~ $TAG_STATEMENT_REGEX ]]
