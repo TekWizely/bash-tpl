@@ -348,7 +348,7 @@ function reset_template_regexes() {
 
 	fmt_regex="${f1}%?([^${f2_}]*)${f2}"
 
-	TAG_TEXT_REGEX="^([^${d1_}]+|${d1}$|${d1}[^[.${d1_}.][.${d2_}.]]+)(.*)"
+	TAG_TEXT_REGEX="^([^${d1_}]+|${d1}$|${d1}[^${d1_}${d2_}]+)(.*)"
 
 	std_regex="((([^${d3_}])|(${d3}[^${d4_}]))*)"
 
@@ -436,7 +436,8 @@ function escape_regex() {
 	e="${e//'['/\\[}"
 	e="${e//']'/\\]}"
 	e="${e//'{'/\\{}"
-	e="${e//'}'/\}}"
+	local RBRACE='}'
+	e="${e//'}'/\\${RBRACE}}"
 	printf -v "${1}" "%s" "${e}"
 }
 
