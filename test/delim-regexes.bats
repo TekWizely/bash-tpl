@@ -8,6 +8,7 @@ setup() {
 @test "delim regexes should be defined" {
 	[[ -n "${TAG_DELIM_REGEX}"        ]]
 	[[ -n "${TAG_STMT_DELIM_REGEX}"   ]]
+	[[ -n "${TAG_FMT_DELIM_REGEX}"    ]]
 	[[ -n "${STMT_DELIM_REGEX}"       ]]
 	[[ -n "${STMT_BLOCK_DELIM_REGEX}" ]]
 	[[ -n "${STMT_BLOCK_TEXT_REGEX}"  ]]
@@ -77,6 +78,41 @@ setup() {
 
 	[[ '.' =~ $TAG_STMT_DELIM_REGEX ]]
 	[[ "${BASH_REMATCH[1]}" == '.'  ]]
+}
+
+@test "TAG_FMT_DELIM_REGEX: invalid data should fail" {
+	[[ ! ''        =~ $TAG_FMT_DELIM_REGEX ]]
+	[[ ! ' '       =~ $TAG_FMT_DELIM_REGEX ]]
+	[[ ! 'a'       =~ $TAG_FMT_DELIM_REGEX ]]
+	[[ ! '  '      =~ $TAG_FMT_DELIM_REGEX ]]
+	[[ ! 'a '      =~ $TAG_FMT_DELIM_REGEX ]]
+	[[ ! ' b'      =~ $TAG_FMT_DELIM_REGEX ]]
+	[[ ! 'ab'      =~ $TAG_FMT_DELIM_REGEX ]]
+	[[ ! '   '     =~ $TAG_FMT_DELIM_REGEX ]]
+	[[ ! 'a  '     =~ $TAG_FMT_DELIM_REGEX ]]
+	[[ ! ' . '     =~ $TAG_FMT_DELIM_REGEX ]]
+	[[ ! '  b'     =~ $TAG_FMT_DELIM_REGEX ]]
+	[[ ! 'a. '     =~ $TAG_FMT_DELIM_REGEX ]]
+	[[ ! ' .b'     =~ $TAG_FMT_DELIM_REGEX ]]
+	[[ ! 'a.b'     =~ $TAG_FMT_DELIM_REGEX ]]
+}
+
+@test "TAG_FMT_DELIM_REGEX: valid data should pass" {
+	[[ 'a b' =~ $TAG_FMT_DELIM_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == 'a' ]]
+	[[ "${BASH_REMATCH[2]}" == 'b' ]]
+
+	[[ '| |' =~ $TAG_FMT_DELIM_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '|' ]]
+	[[ "${BASH_REMATCH[2]}" == '|' ]]
+
+	[[ '[ ]' =~ $TAG_FMT_DELIM_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '[' ]]
+	[[ "${BASH_REMATCH[2]}" == ']' ]]
+
+	[[ '. .' =~ $TAG_FMT_DELIM_REGEX ]]
+	[[ "${BASH_REMATCH[1]}" == '.' ]]
+	[[ "${BASH_REMATCH[2]}" == '.' ]]
 }
 
 @test "STMT_DELIM_REGEX: invalid data should fail" {

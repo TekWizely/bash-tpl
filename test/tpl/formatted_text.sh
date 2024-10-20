@@ -1,0 +1,62 @@
+myint=100
+myintfmt='%d'
+mydec=3.14159
+mydecfmt='%f'
+mystr='one\ttwo'
+printf "\n"
+printf "%s\n" "$myint"
+printf "%s\n" "$myint"
+printf "%d\n" "$myint"
+printf "%d\n" "$myint"
+printf "${myintfmt}\n" "$myint"
+printf "%5d\n" "$myint"
+printf "%05d\n" "$myint"
+printf "%x\n" "$myint"
+printf "\n"
+printf "%s\n" "$mydec"
+printf "%s\n" "$mydec"
+printf "%f\n" "$mydec"
+printf "%f\n" "$mydec"
+printf "${mydecfmt}\n" "$mydec"
+printf "%.2f\n" "$mydec"
+printf "%07.2f\n" "$mydec"
+printf "\n"
+printf "%s\n" "$mystr"
+printf "%s\n" "$mystr"
+printf "%s\n" "$mystr"
+printf "%s\n" "$mystr"
+printf "%20s%b\n" "$mystr" '.'
+printf "%-20s%b\n" "$mystr" '.'
+printf "%b\n" "$mystr"
+printf "\n"
+printf "%b%b%b\n" '.' " $mystr " '.'
+printf "%b\n" "$(echo $mystr)"
+printf "\n"
+printf "\n"
+printf "%s\n" "$myint"
+printf "%s\n" "$myint"
+printf "%d\n" "$myint"
+printf "%d\n" "$myint"
+printf "${myintfmt}\n" "$myint"
+printf "%5d\n" "$myint"
+printf "%05d\n" "$myint"
+printf "%x\n" "$myint"
+printf "\n"
+printf "%s\n" "$mydec"
+printf "%s\n" "$mydec"
+printf "%f\n" "$mydec"
+printf "%f\n" "$mydec"
+printf "${mydecfmt}\n" "$mydec"
+printf "%.2f\n" "$mydec"
+printf "%07.2f\n" "$mydec"
+printf "\n"
+printf "%s\n" "$mystr"
+printf "%s\n" "$mystr"
+printf "%s\n" "$mystr"
+printf "%s\n" "$mystr"
+printf "%20s%b\n" "$mystr" '.'
+printf "%-20s%b\n" "$mystr" '.'
+printf "%b\n" "$mystr"
+printf "\n"
+printf "%b%b%b\n" '.' " $mystr " '.'
+printf "%b\n" "$(echo $mystr)"
