@@ -346,27 +346,29 @@ function reset_template_regexes() {
 
 	local fmt_regex std_regex quote_regex stmt_regex
 
-	fmt_regex="${f1}%?([^${f2_}]*)${f2}"
+	fmt_regex="${f1}([^${f2_}]*)${f2}"
 
 	TAG_TEXT_REGEX="^([^${d1_}]+|${d1}$|${d1}[^${d1_}${d2_}]+)(.*)"
 
 	std_regex="((([^${d3_}])|(${d3}[^${d4_}]))*)"
 
-	TAG_STD_REGEX="^${d1}${d2}(${fmt_regex})?${std_regex}${d3}${d4}(.*)"
+	# No [[:space:]] checks after fmt_regex as we'll let std_regex pick them up then trim them
+	TAG_STD_REGEX="^${d1}${d2}[[:space:]]*(${fmt_regex})?${std_regex}${d3}${d4}(.*)"
 	TAG_STD_MATCH_IDX_FMT=2
 	TAG_STD_MATCH_IDX_TXT=3
 	TAG_STD_MATCH_IDX_END=7
 
 	quote_regex="\"((([^\"])|(\"[^${d3_}])|(\"${d3}[^${d4_}]))*)\""
 
-	TAG_QUOTE_REGEX="^${d1}${d2}(${fmt_regex})?${quote_regex}${d3}${d4}(.*)"
+	TAG_QUOTE_REGEX="^${d1}${d2}[[:space:]]*(${fmt_regex})?[[:space:]]*${quote_regex}[[:space:]]*${d3}${d4}(.*)"
 	TAG_QUOTE_MATCH_IDX_FMT=2
 	TAG_QUOTE_MATCH_IDX_TXT=3
 	TAG_QUOTE_MATCH_IDX_END=8
 
 	stmt_regex="${ds}((([^${d3_}])|(${d3}[^${d4_}]))*)"
 
-	TAG_STATEMENT_REGEX="^${d1}${d2}(${fmt_regex})?${stmt_regex}${d3}${d4}(.*)"
+	# No trailing [[:space:]] check as we'll let std_regex pick them up then trim them
+	TAG_STATEMENT_REGEX="^${d1}${d2}[[:space:]]*(${fmt_regex})?[[:space:]]*${stmt_regex}${d3}${d4}(.*)"
 	TAG_STATEMENT_MATCH_IDX_FMT=2
 	TAG_STATEMENT_MATCH_IDX_TXT=3
 	TAG_STATEMENT_MATCH_IDX_END=7
@@ -601,7 +603,7 @@ function print_text() {
 # $2 = full line of text to process
 #
 function process_tags() {
-	local stmt_indent line formats args arg quoted
+	local stmt_indent line formats args fmt arg quoted
 	stmt_indent="${1}"
 	line="${2}"
 	formats=""
@@ -617,25 +619,31 @@ function process_tags() {
 			args+=("${quoted}")
 			line="${BASH_REMATCH[2]}"
 		elif [[ "${line}" =~ $TAG_QUOTE_REGEX ]]; then
-			# echo "# QUOTE TAG FMT MATCH: $(declare -p BASH_REMATCH)" >&2
+			# echo "# QUOTE TAG MATCH: $(declare -p BASH_REMATCH)" >&2
+			fmt="${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}"
+			trim fmt
 			arg="${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}"
-			formats="${formats}%${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]:-s}"
+			formats="${formats}${fmt:-%s}"
 			args+=("\"${arg}\"")
 			line="${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}"
 		elif [[ "${line}" =~ $TAG_STATEMENT_REGEX ]]; then
-			# echo "# STMT TAG FMT MATCH: $(declare -p BASH_REMATCH)" >&2
+			# echo "# STMT TAG MATCH: $(declare -p BASH_REMATCH)" >&2
+			fmt="${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_FMT}]}"
+			trim fmt
 			arg="${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_TXT}]}"
 			trim arg
-			formats="${formats}%${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_FMT}]:-s}"
+			formats="${formats}${fmt:-%s}"
 			args+=("\"\$(${arg})\"")
 			line="${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_END}]}"
 		# Check standard regex last as it's a super-set of quote and stmt regex
 		# But check fmt regex first
 		elif [[ "${line}" =~ $TAG_STD_REGEX ]]; then
-			# echo "# STD TAG FMT MATCH: $(declare -p BASH_REMATCH)" >&2
+			# echo "# STD TAG MATCH: $(declare -p BASH_REMATCH)" >&2
+			fmt="${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}"
+			trim fmt
 			arg="${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}"
 			trim arg
-			formats="${formats}%${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]:-s}"
+			formats="${formats}${fmt:-%s}"
 			args+=("\"${arg}\"")
 			line="${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}"
 		# Assume next character is TEXT - extract and process remainder

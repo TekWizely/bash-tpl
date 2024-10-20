@@ -317,7 +317,7 @@ You can use a custom format specifier in your tags:
 _integer_format.tpl_
 ```
 % myint=123
-<%|%d| $myint %>
+<%|%d|${myint}%>
 ```
 
 _process the template_
@@ -325,25 +325,58 @@ _process the template_
 $ bash-tpl integer_format.tpl
 
 myint=123
-printf "%d\n" "$myint"
+printf "%d\n" "${myint}"
 ```
 
-#### % is Optional
+#### Whitespace Ignored
 
-The `%` in the format specifier is optional:
+You can add extra whitespace to make your tags easier to read:
 
-_integer_format.tpl_
+_integer_format_spaced.tpl_
 ```
 % myint=123
-<%|d| $myint %>
+<% | %d | ${myint} %>
+```
+
+Processing the template generates the same output as the above (no-whitespace) example:
+
+_process the template_
+```
+$ bash-tpl integer_format_spaced.tpl
+
+myint=123
+printf "%d\n" "${myint}"
+```
+
+#### Variable as Format Specifier
+
+Other than trimming whitespace from the beginning/end of the format specifier, the value is passed as-is to the final output.
+
+This allows you to do things such as use a variable as the format specifier:
+
+_integer_format_var.tpl_
+```
+% myint=123
+% myfmt='%05d'
+<% | ${myfmt} | ${myint} %>
 ```
 
 _process the template_
 ```
-$ bash-tpl integer_format.tpl
+$ bash-tpl integer_format_var.tpl
 
 myint=123
-printf "%d\n" "$myint"
+myfmt='%05d'
+printf "${myfmt}\n" "${myint}"
+```
+
+Invoking the template shows that the output is formatted according to the value of `${myfmt}`:
+
+_invoke template script_
+```
+$ source <( bash-tpl integer_format_var.tpl )
+
+00123
 ```
 
 #### Default Delimiters
