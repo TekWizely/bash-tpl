@@ -46,6 +46,12 @@ $ printf "%b%s%b%s%b\n" 'Text:\t\0047' "$VARIABLE" '\0047 "' "$(echo $VARIABLE)"
 Text:	'Variable' "Variable" $(\n)
 ```
 
+##### Custom Formatting
+
+Although template tags are formatted with `%s` by default, you can customize their format using standard _printf_ format specifiers.
+
+See [Formatting Text Tags](#formatting-text-tags) for more information.
+
 ##### Supports Includes
 
 Templates can include other templates, making it easy to organize your templates as smaller, reusable components.
@@ -85,6 +91,7 @@ The test suite has been tested against Bash versions `3.2`, `4.4`, `5.0`, and `5
 #### TOC
 - [Template Tags](#template-tags)
   - [Text Tags](#text-tags)
+    - [Formatting Text Tags](#formatting-text-tags)
   - [Statement Lines](#statement-lines)
   - [Statement Blocks](#statement-blocks)
   - [Template Comments](#template-comments)
@@ -242,7 +249,7 @@ The default delimiters for Quote Tags are `<%"` &amp; `"%>`
 
 More specifically, the delimiters are : Currently-configured Standard Tag delimiters with leading &amp; trailing quotes (`"`)
 
-NOTE: No whitespace is allowed between the standard tag and the quote character (ie. `<% "` would **not** be treated as a quote tag).
+NOTE: No whitespace is allowed between the standard tag and the quote character (i.e. `<% "` would **not** be treated as a quote tag).
 
 ##### Example
 
@@ -294,12 +301,106 @@ More specifically, the delimiters are : Currently-configured Standard Tag delimi
 
 **NOTES:**
 * The statement Tag delimiter (ie the 2nd `%`) can be configured separate from the Standard Tag delimiters. See [Customizing Delimiters](#customizing-delimiters) for details.
-* No whitespace is allowed between the Standard Tag and the Statement Tag delimiter (ie. `<% %` would **not** be treated as a Statement Tag).
+* No whitespace is allowed between the Standard Tag and the Statement Tag delimiter (i.e. `<% %` would **not** be treated as a Statement Tag).
 * The Statement Tag delimiter is *not* part of the close tag (`%>`), **just** the open tag (`<%%`)
 
 ##### Trimming
 
 **NOTE:** As with Standard Tags, the value within the statement Tag is 'trimmed' before being processed, ie: `'<%% echo $NAME %>'` is equivalent to `'<%%echo $NAME%>'`.
+
+### Formatting Text Tags
+
+By default, all Text Tags are rendered with the _printf_ `%s` format specifier.
+
+You can use a custom format specifier in your tags:
+
+_integer_format.tpl_
+```
+% myint=123
+<%|%d|${myint}%>
+```
+
+_process the template_
+```
+$ bash-tpl integer_format.tpl
+
+myint=123
+printf "%d\n" "${myint}"
+```
+
+#### Whitespace Ignored
+
+You can add extra whitespace to make your tags easier to read:
+
+_integer_format_spaced.tpl_
+```
+% myint=123
+<% | %d | ${myint} %>
+```
+
+Processing the template generates the same output as the above (no-whitespace) example:
+
+_process the template_
+```
+$ bash-tpl integer_format_spaced.tpl
+
+myint=123
+printf "%d\n" "${myint}"
+```
+
+#### Variable as Format Specifier
+
+Other than trimming whitespace from the beginning/end of the format specifier, the value is passed as-is to the final output.
+
+This allows you to do things such as use a variable as the format specifier:
+
+_integer_format_var.tpl_
+```
+% myint=123
+% myfmt='%05d'
+<% | ${myfmt} | ${myint} %>
+```
+
+_process the template_
+```
+$ bash-tpl integer_format_var.tpl
+
+myint=123
+myfmt='%05d'
+printf "${myfmt}\n" "${myint}"
+```
+
+Invoking the template shows that the output is formatted according to the value of `${myfmt}`:
+
+_invoke template script_
+```
+$ source <( bash-tpl integer_format_var.tpl )
+
+00123
+```
+
+#### Default Delimiters
+
+The default delimiters for the format specifier are `|` &amp; `|`
+
+You can customize the delimiters:
+
+_customized_format_delimiters.tpl_
+```
+.DELIMS tag-fmt="[ ]"
+% myint=123
+<%[%d] $myint %>
+```
+
+_process the template_
+```
+$ bash-tpl customized_format_delimiters.tpl
+
+myint=123
+printf "%d\n" "$myint"
+```
+
+See the [Customizing Delimiters](#customizing-delimiters) section to learn about the many ways you can customize delimiters to your liking.
 
 -------------------
 ### Statement Lines
@@ -534,17 +635,18 @@ Hello TekWizely
 
 **NOTES:**
 * Both the `=` and Double-Quotes (`"`) shown in the example script are **required**
-* The changes take affect immediately (i.e the very next line)
+* The changes take effect immediately (i.e. the very next line)
 * The changes are passed along to any included templates
 
 The DELIMS directive accepts the following parameters:
 
 | PARAM                | FORMAT     | NOTE                                                          |
 |----------------------|------------|---------------------------------------------------------------|
-| TAG                  | `".. .."`  | two 2-char sequences, separated by a **single** space         |
+| TAG                  | `".. .."`  | 2 two-char sequences, separated by a **single** space         |
 | TAG-STMT             | `"."`      | 1 single character                                            |
+| TAG-FMT              | `". ."`    | 2 single characters, separated by a **single** space          |
 | STMT                 | `".+"`     | 1 or more characters                                          |
-| STMT-BLOCK           | `".+ .+"`  | two 1-or-more char sequences, separated by a **single** space |
+| STMT-BLOCK           | `".+ .+"`  | 2 one-or-more char sequences, separated by a **single** space |
 | TXT &#124; TEXT      | `".+[ ]?"` | 1 or more characters, with an optional trailing space         |
 | DIR &#124; DIRECTIVE | `".+"`     | 1 or more characters                                          |
 | CMT &#124; COMMENT   | `".+"`     | 1 or more characters                                          |
@@ -582,10 +684,11 @@ You can change the default delimiters globally via the following environment var
 
 | VARIABLE                   | FORMAT     | NOTE                                                          |
 |----------------------------|------------|---------------------------------------------------------------|
-| BASH_TPL_TAG_DELIMS        | `".. .."`  | two 2-char sequences, separated by a **single** space         |
+| BASH_TPL_TAG_DELIMS        | `".. .."`  | 2 two-char sequences, separated by a **single** space         |
 | BASH_TPL_TAG_STMT_DELIM    | `"."`      | 1 single character                                            |
+| BASH_TPL_TAG_FMT_DELIMS    | `". ."`    | 2 single characters, separated by a **single** space          |
 | BASH_TPL_STMT_DELIM        | `".+"`     | 1 or more characters                                          |
-| BASH_TPL_STMT_BLOCK_DELIMS | `".+ .+"`  | two 1-or-more char sequences, separated by a **single** space |
+| BASH_TPL_STMT_BLOCK_DELIMS | `".+ .+"`  | 1 one-or-more char sequences, separated by a **single** space |
 | BASH_TPL_TEXT_DELIM        | `".+[ ]?"` | 1 or more characters, with an optional trailing space         |
 | BASH_TPL_DIR_DELIM         | `".+"`     | 1 or more characters                                          |
 | BASH_TPL_CMT_DELIM         | `".+"`     | 1 or more characters                                          |
@@ -611,10 +714,11 @@ The following command line options are available for customizing delimiters:
 
 | OPTION                               | FORMAT     | NOTE                                                          |
 |--------------------------------------|------------|---------------------------------------------------------------|
-| --tag-delims                         | `".. .."`  | two 2-char sequences, separated by a **single** space         |
+| --tag-delims                         | `".. .."`  | 2 two-char sequences, separated by a **single** space         |
 | --tag-stmt-delim                     | `"."`      | 1 single character                                            |
+| --tag-fmt-delims                     | `". ."`    | 2 single characters, separated by a **single** space          |
 | --stmt-delim                         | `".+"`     | 1 or more characters                                          |
-| --stmt-block-delims                  | `".+ .+"`  | two 1-or-more char sequences, separated by a **single** space |
+| --stmt-block-delims                  | `".+ .+"`  | 2 one-or-more char sequences, separated by a **single** space |
 | --txt-delim &#124; --text-delim      | `".+[ ]?"` | 1 or more characters, with an optional trailing space         |
 | --dir-delim &#124; --directive-delim | `".+"`     | 1 or more characters                                          |
 | --cmt-delim &#124; --comment-delim   | `".+"`     | 1 or more characters                                          |
@@ -656,8 +760,8 @@ $ bash-tpl --reset-delims test.tpl
 
 **NOTES:**
 * Overrides environment variables
-* Overrides any commend-line options that apperar *before* the `--reset-delims` option
-* Does **not** override any command-line options that appear *afer* the `--reset-delims` option
+* Overrides any commend-line options that appear *before* the `--reset-delims` option
+* Does **not** override any command-line options that appear *after* the `--reset-delims` option
 * Can be passed as an option in an [INCLUDE](#include) directive, ie:
   ```
   .INCLUDE my_include.tpl --reset-delims

@@ -14,6 +14,8 @@ setup() {
 	[[ "${TAG_STOP_DELIM1}"            == '%' ]]
 	[[ "${TAG_STOP_DELIM2}"            == '>' ]]
 	[[ "${TAG_STMT_DELIM}"             == '%' ]]
+	[[ "${TAG_FMT_START_DELIM}"        == '|' ]]
+	[[ "${TAG_FMT_STOP_DELIM}"         == '|' ]]
 	[[ "${STMT_DELIM}"                 == '%' ]]
 	[[ "${STMT_BLOCK_DELIM_UNDEFINED}" == '1' ]]
 	[[ "${STMT_BLOCK_START_DELIM}"     == ''  ]]
@@ -98,6 +100,42 @@ setup() {
 	parse_tag_stmt_delim '$'
 
 	[[ "${TAG_STMT_DELIM}" == '$' ]]
+}
+
+@test "parse_tag_fmt_delims: Should error on invalid input" {
+	# Empty
+	#
+	run parse_tag_fmt_delims '' 'BATS'
+	[[ $status -eq 1 ]]
+	[[ "$output" == "Error: Invalid or missing tag fmt delimiter values for BATS: ''" ]]
+
+	# All Spaces
+	#
+	run parse_tag_fmt_delims '     ' 'BATS'
+	[[ $status -eq 1 ]]
+	[[ "$output" == "Error: Invalid or missing tag fmt delimiter values for BATS: '     '" ]]
+
+	# No middle-space
+	#
+	run parse_tag_fmt_delims '||' 'BATS'
+	[[ $status -eq 1 ]]
+	[[ "$output" == "Error: Invalid or missing tag fmt delimiter values for BATS: '||'" ]]
+}
+
+@test "parse_tag_fmt_delims: Should process valid input" {
+
+	[[ -z "${TAG_FMT_START_DELIM}" ]]
+	[[ -z "${TAG_FMT_STOP_DELIM}"  ]]
+
+	parse_tag_fmt_delims '| |'
+
+	[[ "${TAG_FMT_START_DELIM}" == '|' ]]
+	[[ "${TAG_FMT_STOP_DELIM}"  == '|' ]]
+
+	parse_tag_fmt_delims '[ ]'
+
+	[[ "${TAG_FMT_START_DELIM}" == '[' ]]
+	[[ "${TAG_FMT_STOP_DELIM}"  == ']' ]]
 }
 
 @test "parse_stmt_delim: Should error on invalid input" {

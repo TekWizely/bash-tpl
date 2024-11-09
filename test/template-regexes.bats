@@ -1,3 +1,4 @@
+# shellcheck disable=SC2016 # Variable expression in single-quotes
 
 setup() {
 	bats_require_minimum_version 1.7.0
@@ -83,6 +84,18 @@ setup() {
 	[[ -z "${TAG_QUOTE_REGEX}"             ]]
 	[[ -z "${TAG_STATEMENT_REGEX}"         ]]
 
+	[[ -z "${TAG_STD_MATCH_IDX_FMT}"       ]]
+	[[ -z "${TAG_STD_MATCH_IDX_TXT}"       ]]
+	[[ -z "${TAG_STD_MATCH_IDX_END}"       ]]
+
+	[[ -z "${TAG_QUOTE_MATCH_IDX_FMT}"     ]]
+	[[ -z "${TAG_QUOTE_MATCH_IDX_TXT}"     ]]
+	[[ -z "${TAG_QUOTE_MATCH_IDX_END}"     ]]
+
+	[[ -z "${TAG_STATEMENT_MATCH_IDX_FMT}" ]]
+	[[ -z "${TAG_STATEMENT_MATCH_IDX_TXT}" ]]
+	[[ -z "${TAG_STATEMENT_MATCH_IDX_END}" ]]
+
 	reset_template_regexes
 
 	# TODO Determine how to confirm that the value is a valid bash regex
@@ -98,6 +111,18 @@ setup() {
 	[[ -n "${TAG_STD_REGEX}"               ]]
 	[[ -n "${TAG_QUOTE_REGEX}"             ]]
 	[[ -n "${TAG_STATEMENT_REGEX}"         ]]
+
+	[[ -n "${TAG_STD_MATCH_IDX_FMT}"       ]]
+	[[ -n "${TAG_STD_MATCH_IDX_TXT}"       ]]
+	[[ -n "${TAG_STD_MATCH_IDX_END}"       ]]
+
+	[[ -n "${TAG_QUOTE_MATCH_IDX_FMT}"     ]]
+	[[ -n "${TAG_QUOTE_MATCH_IDX_TXT}"     ]]
+	[[ -n "${TAG_QUOTE_MATCH_IDX_END}"     ]]
+
+	[[ -n "${TAG_STATEMENT_MATCH_IDX_FMT}" ]]
+	[[ -n "${TAG_STATEMENT_MATCH_IDX_TXT}" ]]
+	[[ -n "${TAG_STATEMENT_MATCH_IDX_END}" ]]
 }
 
 @test "DIRECTIVE_REGEX: should fail on invalid directive line" {
@@ -699,36 +724,62 @@ setup() {
 	reset_delims
 	reset_template_regexes
 
-	[[ ! ""         =~ $TAG_STD_REGEX ]]
-	[[ ! " "        =~ $TAG_STD_REGEX ]]
-	[[ ! "<"        =~ $TAG_STD_REGEX ]]
-	[[ ! "<%"       =~ $TAG_STD_REGEX ]]
-	[[ ! "<%>"      =~ $TAG_STD_REGEX ]]
-	[[ ! "<% >"     =~ $TAG_STD_REGEX ]]
-	[[ ! "<% tag >" =~ $TAG_STD_REGEX ]]
-	[[ ! "<% % >"   =~ $TAG_STD_REGEX ]]
+	[[ ! ""          =~ $TAG_STD_REGEX ]]
+	[[ ! " "         =~ $TAG_STD_REGEX ]]
+	[[ ! "<"         =~ $TAG_STD_REGEX ]]
+	[[ ! "<%"        =~ $TAG_STD_REGEX ]]
+	[[ ! "<%>"       =~ $TAG_STD_REGEX ]]
+	[[ ! "<% >"      =~ $TAG_STD_REGEX ]]
+	[[ ! "<% tag >"  =~ $TAG_STD_REGEX ]]
+	[[ ! "<% % >"    =~ $TAG_STD_REGEX ]]
 
-	[[ ! "<%%%>"    =~ $TAG_STD_REGEX ]] # Caveat to make the regex work
-	[[ ! "<% %%>"   =~ $TAG_STD_REGEX ]] # Caveat to make the regex work
-#	[[ ! "<%%%%>"   =~ $TAG_STD_REGEX ]] # Caveat to make the regex work
+	[[ ! "<%%%>"     =~ $TAG_STD_REGEX ]] # Caveat to make the regex work
+	[[ ! "<% %%>"    =~ $TAG_STD_REGEX ]] # Caveat to make the regex work
+	[[   "<%%%%>"    =~ $TAG_STD_REGEX ]] # Caveat to make the regex work
+
+	[[ ! "<%|"       =~ $TAG_STD_REGEX ]]
+	[[ ! "<%|>"      =~ $TAG_STD_REGEX ]]
+	[[ ! "<%| >"     =~ $TAG_STD_REGEX ]]
+	[[ ! "<%| tag >" =~ $TAG_STD_REGEX ]]
+	[[ ! "<%| % >"   =~ $TAG_STD_REGEX ]]
+
+	[[ ! "<%|%%>"    =~ $TAG_STD_REGEX ]] # Caveat to make the regex work
+	[[ ! "<%| %%>"   =~ $TAG_STD_REGEX ]] # Caveat to make the regex work
+	[[   "<%|%%%>"   =~ $TAG_STD_REGEX ]] # Caveat to make the regex work
+
+	[[   "<% ||%>"   =~ $TAG_STD_REGEX ]]
 
 	#
 	# Custom Delims
 	#
 
-	parse_tag_delims "{{ }}"
+	parse_tag_delims     "{{ }}"
+	parse_tag_fmt_delims "[ ]"
 	reset_template_regexes
 
-	[[ ! "{"        =~ $TAG_STD_REGEX ]]
-	[[ ! "{}"       =~ $TAG_STD_REGEX ]]
-	[[ ! "{{"       =~ $TAG_STD_REGEX ]]
-	[[ ! "{{}"      =~ $TAG_STD_REGEX ]]
-	[[ ! "{}}"      =~ $TAG_STD_REGEX ]]
-	[[ ! "{{ }"     =~ $TAG_STD_REGEX ]]
-	[[ ! "{  }}"    =~ $TAG_STD_REGEX ]]
-	[[ ! "{ }"      =~ $TAG_STD_REGEX ]]
-	[[ ! "{{ tag }" =~ $TAG_STD_REGEX ]]
-	[[ ! "{{ } }"   =~ $TAG_STD_REGEX ]]
+	[[ ! "{"         =~ $TAG_STD_REGEX ]]
+	[[ ! "{}"        =~ $TAG_STD_REGEX ]]
+	[[ ! "{{"        =~ $TAG_STD_REGEX ]]
+	[[ ! "{{}"       =~ $TAG_STD_REGEX ]]
+	[[ ! "{}}"       =~ $TAG_STD_REGEX ]]
+	[[ ! "{{ }"      =~ $TAG_STD_REGEX ]]
+	[[ ! "{  }}"     =~ $TAG_STD_REGEX ]]
+	[[ ! "{ }"       =~ $TAG_STD_REGEX ]]
+	[[ ! "{{ tag }"  =~ $TAG_STD_REGEX ]]
+	[[ ! "{{ } }"    =~ $TAG_STD_REGEX ]]
+
+	[[ ! "{["        =~ $TAG_STD_REGEX ]]
+	[[ ! "{[}"       =~ $TAG_STD_REGEX ]]
+	[[ ! "{{["       =~ $TAG_STD_REGEX ]]
+	[[ ! "{{[}"      =~ $TAG_STD_REGEX ]]
+	[[ ! "{[}}"      =~ $TAG_STD_REGEX ]]
+	[[ ! "{{[ }"     =~ $TAG_STD_REGEX ]]
+	[[ ! "{[  }}"    =~ $TAG_STD_REGEX ]]
+	[[ ! "{[ }"      =~ $TAG_STD_REGEX ]]
+	[[ ! "{{[ tag }" =~ $TAG_STD_REGEX ]]
+	[[ ! "{{[ } }"   =~ $TAG_STD_REGEX ]]
+
+	[[ ! "{{ []}"    =~ $TAG_STD_REGEX ]]
 }
 
 @test "TAG_STD_REGEX: should match on valid std script tag" {
@@ -752,11 +803,58 @@ setup() {
 
 	[[ "<%%%%>"      =~ $TAG_STD_REGEX ]]
 
+
+	[[ "<%%>"                                      =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == ''             ]]
+
+	[[ "<%text%>end"                               =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == 'text'         ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == 'end'          ]]
+
+	[[ "<%||%>"                                    =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == ''             ]]
+
+	[[ "<%| |%>"                                   =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ' '            ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == ''             ]]
+
+	[[ "<% | | %>"                                 =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ' '            ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ' '            ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == ''             ]]
+
+	[[ "<%|%|%>"                                   =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == '%'            ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == ''             ]]
+
+	[[ "<%| % |%>"                                 =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ' % '          ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == ''             ]]
+
+	[[ "<%|%format|%>"                             =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == '%format'      ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == ''             ]]
+
+	[[ '<%|${format}|text%>end'                    =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == '${format}'    ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == 'text'         ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == 'end'          ]]
+
 	#
 	# Custom Delims
 	#
 
-	parse_tag_delims "{{ }}"
+	parse_tag_delims     "{{ }}"
+	parse_tag_fmt_delims "[ ]"
 	reset_template_regexes
 
 	[[ "{{}}"       =~ $TAG_STD_REGEX ]]
@@ -771,13 +869,60 @@ setup() {
 	[[ "{{} }}"     =~ $TAG_STD_REGEX ]]
 	[[ "{{ } }}"    =~ $TAG_STD_REGEX ]]
 
-	[[ "{{ }}}" =~ $TAG_STD_REGEX  ]]
-	[[ "${BASH_REMATCH[1]}" == ' ' ]]
-	[[ "${BASH_REMATCH[5]}" == '}' ]]
+	[[ "{{}}"                                      =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == ''             ]]
 
-	[[ "{{}}}}}" =~ $TAG_STD_REGEX   ]]
-	[[ "${BASH_REMATCH[1]}" == ''    ]]
-	[[ "${BASH_REMATCH[5]}" == '}}}' ]]
+	[[ "{{text}}end"                               =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == 'text'         ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == 'end'          ]]
+
+	[[ "{{ }}}"                                    =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '}'            ]]
+
+	[[ "{{}}}}}"                                   =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '}}}'          ]]
+
+	[[ "{{[]}}"                                    =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == ''             ]]
+
+	[[ "{{ [] }}"                                  =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ' '            ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == ''             ]]
+
+	[[ "{{[%]}}"                                   =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == '%'            ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == ''             ]]
+
+	[[ "{{[%format]text}}end"                      =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == '%format'      ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == 'text'         ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == 'end'          ]]
+
+	[[ '{{[${format}]}}'                           =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == '${format}'    ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == ''             ]]
+
+	[[ "{{[] }}}"                                  =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ' '            ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '}'            ]]
+
+	[[ "{{[]}}}}}"                                 =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '}}}'          ]]
 }
 
 @test "TAG_STD_REGEX: should only match 1st tag if multiple tags present" {
@@ -788,72 +933,183 @@ setup() {
 	reset_delims
 	reset_template_regexes
 
-	[[ "<% . %>."  =~ $TAG_STD_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == ' . ' ]]
-	[[ "${BASH_REMATCH[5]}" == '.'   ]]
+	[[ "<% . %>."                                  =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == '. '           ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '.'            ]]
 
-	[[ "<% . %><"  =~ $TAG_STD_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == ' . ' ]]
-	[[ "${BASH_REMATCH[5]}" == '<'   ]]
+	[[ "<% . %><"                                  =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == '. '           ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '<'            ]]
 
-	[[ "<% . %>%"  =~ $TAG_STD_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == ' . ' ]]
-	[[ "${BASH_REMATCH[5]}" == '%'   ]]
+	[[ "<% . %>%"                                  =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == '. '           ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '%'            ]]
 
-	[[ "<% . %><%"  =~ $TAG_STD_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == ' . '  ]]
-	[[ "${BASH_REMATCH[5]}" == '<%'   ]]
+	[[ "<% . %><%"                                 =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == '. '           ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '<%'           ]]
 
-	[[ "<% . %>>"  =~ $TAG_STD_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == ' . ' ]]
-	[[ "${BASH_REMATCH[5]}" == '>'   ]]
+	[[ "<% . %>>"                                  =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == '. '           ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '>'            ]]
 
-	[[ "<% . %>%>"  =~ $TAG_STD_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == ' . '  ]]
-	[[ "${BASH_REMATCH[5]}" == '%>'   ]]
+	[[ "<% . %>%>"                                 =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == '. '           ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '%>'           ]]
 
-	[[ "<% . %><% . %>"  =~ $TAG_STD_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == ' . '       ]]
-	[[ "${BASH_REMATCH[5]}" == '<% . %>'   ]]
+	[[ "<% . %><% . %>"                            =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == '. '           ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '<% . %>'      ]]
 
-	[[ "<% . %>.<% . %>"  =~ $TAG_STD_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == ' . '        ]]
-	[[ "${BASH_REMATCH[5]}" == '.<% . %>'   ]]
+	[[ "<% . %>.<% . %>"                           =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == '. '           ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '.<% . %>'     ]]
+
+	[[ "<%|| . %>."                                =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ' . '          ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '.'            ]]
+
+	[[ "<%|| . %><"                                =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ' . '          ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '<'            ]]
+
+	[[ "<%|| . %>%"                                =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ' . '          ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '%'            ]]
+
+	[[ "<%|| . %><%"                               =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ' . '          ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '<%'           ]]
+
+	[[ "<%|| . %>>"                                =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ' . '          ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '>'            ]]
+
+	[[ "<%|| . %>%>"                               =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ' . '          ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '%>'           ]]
+
+	[[ "<%|| . %><% . %>"                          =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ' . '          ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '<% . %>'      ]]
+
+	[[ "<%|| . %>.<% . %>"                         =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ' . '          ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '.<% . %>'     ]]
+
+	[[ "<%|%format|text%>.<% . %>"                 =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == '%format'      ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == 'text'         ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '.<% . %>'     ]]
+
+	[[ '<%|${format}|text%>.<% . %>'               =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == '${format}'    ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == 'text'         ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '.<% . %>'     ]]
 
 	#
 	# Custom Delims
 	#
 
 	parse_tag_delims "{{ }}"
+	parse_tag_fmt_delims "[ ]"
 	reset_template_regexes
 
-	[[ "{{ . }}." =~ $TAG_STD_REGEX  ]]
-	[[ "${BASH_REMATCH[1]}" == ' . ' ]]
-	[[ "${BASH_REMATCH[5]}" == '.'   ]]
+	[[ "{{ . }}."                                  =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == '. '           ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '.'            ]]
 
-	[[ "{{ . }}{" =~ $TAG_STD_REGEX  ]]
-	[[ "${BASH_REMATCH[1]}" == ' . ' ]]
-	[[ "${BASH_REMATCH[5]}" == '{'   ]]
+	[[ "{{ . }}{"                                  =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == '. '           ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '{'            ]]
 
-	[[ "{{ . }}{{" =~ $TAG_STD_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == ' . ' ]]
-	[[ "${BASH_REMATCH[5]}" == '{{'  ]]
+	[[ "{{ . }}{{"                                 =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == '. '           ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '{{'           ]]
 
-	[[ "{{ . }}}" =~ $TAG_STD_REGEX  ]]
-	[[ "${BASH_REMATCH[1]}" == ' . ' ]]
-	[[ "${BASH_REMATCH[5]}" == '}'   ]]
+	[[ "{{ . }}}"                                  =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == '. '           ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '}'            ]]
 
-	[[ "{{ . }}}}" =~ $TAG_STD_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == ' . ' ]]
-	[[ "${BASH_REMATCH[5]}" == '}}'  ]]
+	[[ "{{ . }}}}"                                 =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == '. '           ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '}}'           ]]
 
-	[[ "{{ . }}{{ . }}" =~ $TAG_STD_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == ' . '      ]]
-	[[ "${BASH_REMATCH[5]}" == '{{ . }}'  ]]
+	[[ "{{ . }}{{ . }}"                            =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == '. '           ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '{{ . }}'      ]]
 
-	[[ "{{ . }}.{{ . }}" =~ $TAG_STD_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == ' . '       ]]
-	[[ "${BASH_REMATCH[5]}" == '.{{ . }}'  ]]
+	[[ "{{ . }}.{{ . }}"                           =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == '. '           ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '.{{ . }}'     ]]
+
+	[[ "{{[] . }}."                                =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ' . '          ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '.'            ]]
+
+	[[ "{{[] . }}{"                                =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ' . '          ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '{'            ]]
+
+	[[ "{{[] . }}{{"                               =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ' . '          ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '{{'           ]]
+
+	[[ "{{[] . }}}"                                =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ' . '          ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '}'            ]]
+
+	[[ "{{[] . }}}}"                               =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ' . '          ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '}}'           ]]
+
+	[[ "{{[] . }}{{ . }}"                          =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ' . '          ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '{{ . }}'      ]]
+
+	[[ "{{[] . }}.{{ . }}"                         =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == ''             ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == ' . '          ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '.{{ . }}'     ]]
+
+	[[ "{{[%format]text}}.{{ . }}"                 =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == '%format'      ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == 'text'         ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '.{{ . }}'     ]]
+
+	[[ '{{[${format}]text}}.{{ . }}'               =~ $TAG_STD_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}" == '${format}'    ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}" == 'text'         ]]
+	[[ "${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}" == '.{{ . }}'     ]]
 }
 
 @test "TAG_QUOTE_REGEX: should fail on invalid quote script tag" {
@@ -870,10 +1126,11 @@ setup() {
 	[[ ! "<>"        =~ $TAG_QUOTE_REGEX ]]
 	[[ ! "<%"        =~ $TAG_QUOTE_REGEX ]]
 	[[ ! "<%>"       =~ $TAG_QUOTE_REGEX ]]
-	[[ ! "<% %>"     =~ $TAG_QUOTE_REGEX ]]
+	[[ !  "<% %>"    =~ $TAG_QUOTE_REGEX ]]
 	[[ ! "<% tag %>" =~ $TAG_QUOTE_REGEX ]]
 	[[ ! '<%"%>'     =~ $TAG_QUOTE_REGEX ]]
-	[[ ! '<%" " %>'  =~ $TAG_QUOTE_REGEX ]]
+	[[   '<%" " %>'  =~ $TAG_QUOTE_REGEX ]]
+	[[   '<% " " %>' =~ $TAG_QUOTE_REGEX ]]
 	[[ ! '<%"""%>'   =~ $TAG_QUOTE_REGEX ]] # Caveat to make the regex work
 	[[ ! '<%" ""%>'  =~ $TAG_QUOTE_REGEX ]] # Caveat to make the regex work
 	[[ ! '<%"""""%>' =~ $TAG_QUOTE_REGEX ]] # Caveat to make the regex work
@@ -893,7 +1150,9 @@ setup() {
 	[[ ! "{{ }}"     =~ $TAG_QUOTE_REGEX ]]
 	[[ ! "{{ tag }}" =~ $TAG_QUOTE_REGEX ]]
 	[[ ! '{{"}}'     =~ $TAG_QUOTE_REGEX ]]
-	[[ ! '{{" " }}'  =~ $TAG_QUOTE_REGEX ]]
+	[[  '{{" " }}'   =~ $TAG_QUOTE_REGEX ]]
+	[[  '{{ " "}}'   =~ $TAG_QUOTE_REGEX ]]
+	[[  '{{ " " }}'  =~ $TAG_QUOTE_REGEX ]]
 }
 
 @test "TAG_QUOTE_REGEX: should match on valid quote script tag" {
@@ -907,8 +1166,11 @@ setup() {
 	[[ '<%""%>'      =~ $TAG_QUOTE_REGEX ]]
 
 	[[ '<%""%>'      =~ $TAG_QUOTE_REGEX ]]
+	[[ '<% "" %>'    =~ $TAG_QUOTE_REGEX ]]
 	[[ '<%"  "%>'    =~ $TAG_QUOTE_REGEX ]]
+	[[ '<% "  " %>'  =~ $TAG_QUOTE_REGEX ]]
 	[[ '<%"tag"%>'   =~ $TAG_QUOTE_REGEX ]]
+	[[ '<% "tag" %>' =~ $TAG_QUOTE_REGEX ]]
 	[[ '<%" tag"%>'  =~ $TAG_QUOTE_REGEX ]]
 	[[ '<%"tag "%>'  =~ $TAG_QUOTE_REGEX ]]
 	[[ '<%" tag "%>' =~ $TAG_QUOTE_REGEX ]]
@@ -916,23 +1178,97 @@ setup() {
 	[[ '<%" " "%>'   =~ $TAG_QUOTE_REGEX ]]
 	[[ '<%""""%>'    =~ $TAG_QUOTE_REGEX ]]
 
+	[[ '<%||""%>'                                    =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == ''               ]]
+
+	[[ '<% || "" %>'                                 =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == ''               ]]
+
+	[[ '<%|%|""%>'                                   =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == '%'              ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == ''               ]]
+
+	[[ '<%|%s|""%>'                                  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == '%s'             ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == ''               ]]
+
+	[[ '<%|%format|"text"%>'                         =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == '%format'        ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == 'text'           ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == ''               ]]
+
+	[[ '<%|${format}|"text"%>'                       =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == '${format}'      ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == 'text'           ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == ''               ]]
+
+	[[ '<% |${format}| "text" %>'                    =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == '${format}'      ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == 'text'           ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == ''               ]]
+
 	#
 	# Custom Delims
 	#
 
 	parse_tag_delims "{{ }}"
+	parse_tag_fmt_delims "[ ]"
 	reset_template_regexes
 
 	[[ '{{""}}'        =~ $TAG_QUOTE_REGEX ]]
+	[[ '{{ "" }}'      =~ $TAG_QUOTE_REGEX ]]
 	[[ '{{" "}}'       =~ $TAG_QUOTE_REGEX ]]
+	[[ '{{ " " }}'     =~ $TAG_QUOTE_REGEX ]]
 	[[ '{{"  "}}'      =~ $TAG_QUOTE_REGEX ]]
 	[[ '{{"tag"}}'     =~ $TAG_QUOTE_REGEX ]]
+	[[ '{{ "tag" }}'   =~ $TAG_QUOTE_REGEX ]]
 	[[ '{{" tag"}}'    =~ $TAG_QUOTE_REGEX ]]
 	[[ '{{"tag "}}'    =~ $TAG_QUOTE_REGEX ]]
 	[[ '{{" tag "}}>'  =~ $TAG_QUOTE_REGEX ]]
 	[[ '{{"" "}}'      =~ $TAG_QUOTE_REGEX ]]
 	[[ '{{" " "}}'     =~ $TAG_QUOTE_REGEX ]]
 	[[ '{{""""}}'      =~ $TAG_QUOTE_REGEX ]]
+
+	[[ '{{[]""}}'                                    =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == ''               ]]
+
+	[[ '{{ [] "" }}'                                 =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == ''               ]]
+
+	[[ '{{[%]""}}'                                   =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == '%'              ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == ''               ]]
+
+	[[ '{{[%s]""}}'                                  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == '%s'             ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == ''               ]]
+
+	[[ '{{[%format]"text"}}'                         =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == '%format'        ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == 'text'           ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == ''               ]]
+
+	[[ '{{[${format}]"text"}}'                       =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == '${format}'      ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == 'text'           ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == ''               ]]
+
+	[[ '{{ [${format}] "text" }}'                    =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == '${format}'      ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == 'text'           ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == ''               ]]
 }
 
 @test "TAG_QUOTE_REGEX: should only match 1st tag if multiple tags present" {
@@ -943,49 +1279,60 @@ setup() {
 	reset_delims
 	reset_template_regexes
 
-	[[ '<%"."%>.'  =~ $TAG_QUOTE_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'     ]]
-	[[ "${BASH_REMATCH[6]}" == '.'     ]]
+	[[ '<%"."%>.'                                    =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == '.'              ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == '.'              ]]
 
-	[[ '<%"."%><'  =~ $TAG_QUOTE_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'     ]]
-	[[ "${BASH_REMATCH[6]}" == '<'     ]]
+	[[ '<%"."%><'                                    =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == '.'              ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == '<'              ]]
 
-	[[ '<%"."%><%'  =~ $TAG_QUOTE_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'      ]]
-	[[ "${BASH_REMATCH[6]}" == '<%'     ]]
+	[[ '<%"."%><%'                                   =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == '.'              ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == '<%'             ]]
 
-	[[ '<%"."%><%"'  =~ $TAG_QUOTE_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'       ]]
-	[[ "${BASH_REMATCH[6]}" == '<%"'     ]]
+	[[ '<%"."%><%"'                                  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == '.'              ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == '<%"'            ]]
 
-	[[ '<%"."%>>'  =~ $TAG_QUOTE_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'     ]]
-	[[ "${BASH_REMATCH[6]}" == '>'     ]]
+	[[ '<%"."%>>'                                    =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == '.'              ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == '>'              ]]
 
-	[[ '<%"."%>%>'  =~ $TAG_QUOTE_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'      ]]
-	[[ "${BASH_REMATCH[6]}" == '%>'     ]]
+	[[ '<%"."%>%>'                                   =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == '.'              ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == '%>'             ]]
 
-	[[ '<%"."%>"'  =~ $TAG_QUOTE_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'     ]]
-	[[ "${BASH_REMATCH[6]}" == '"'     ]]
+	[[ '<%"."%>"'                                    =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == '.'              ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == '"'              ]]
 
-	[[ '<%"."%>"%'  =~ $TAG_QUOTE_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'      ]]
-	[[ "${BASH_REMATCH[6]}" == '"%'     ]]
+	[[ '<%"."%>"%'                                   =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == '.'              ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == '"%'             ]]
 
-	[[ '<%"."%>"%>'  =~ $TAG_QUOTE_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'       ]]
-	[[ "${BASH_REMATCH[6]}" == '"%>'     ]]
+	[[ '<%"."%>"%>'                                  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == '.'              ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == '"%>'            ]]
 
-	[[ '<%"."%><%"."%>'  =~ $TAG_QUOTE_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'           ]]
-	[[ "${BASH_REMATCH[6]}" == '<%"."%>'     ]]
+	[[ '<%"."%><%"."%>'                              =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == '.'              ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == '<%"."%>'        ]]
 
-	[[ '<%"."%>.<%"."%>'  =~ $TAG_QUOTE_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'            ]]
-	[[ "${BASH_REMATCH[6]}" == '.<%"."%>'     ]]
+	[[ '<%"."%>.<%"."%>'                             =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == '.'              ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == '.<%"."%>'       ]]
 
 	#
 	# Custom Delims
@@ -994,49 +1341,60 @@ setup() {
 	parse_tag_delims "{{ }}"
 	reset_template_regexes
 
-	[[ '{{"."}}.'  =~ $TAG_QUOTE_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'     ]]
-	[[ "${BASH_REMATCH[6]}" == '.'     ]]
+	[[ '{{"."}}.'                                    =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == '.'              ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == '.'              ]]
 
-	[[ '{{"."}}{'  =~ $TAG_QUOTE_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'     ]]
-	[[ "${BASH_REMATCH[6]}" == '{'     ]]
+	[[ '{{"."}}{'                                    =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == '.'              ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == '{'              ]]
 
-	[[ '{{"."}}{{'  =~ $TAG_QUOTE_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'      ]]
-	[[ "${BASH_REMATCH[6]}" == '{{'     ]]
+	[[ '{{"."}}{{'                                   =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == '.'              ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == '{{'             ]]
 
-	[[ '{{"."}}{{"'  =~ $TAG_QUOTE_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'       ]]
-	[[ "${BASH_REMATCH[6]}" == '{{"'     ]]
+	[[ '{{"."}}{{"'                                  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == '.'              ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == '{{"'            ]]
 
-	[[ '{{"."}}}'  =~ $TAG_QUOTE_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'     ]]
-	[[ "${BASH_REMATCH[6]}" == '}'     ]]
+	[[ '{{"."}}}'                                    =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == '.'              ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == '}'              ]]
 
-	[[ '{{"."}}}}'  =~ $TAG_QUOTE_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'      ]]
-	[[ "${BASH_REMATCH[6]}" == '}}'     ]]
+	[[ '{{"."}}}}'                                   =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == '.'              ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == '}}'             ]]
 
-	[[ '{{"."}}"'  =~ $TAG_QUOTE_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'     ]]
-	[[ "${BASH_REMATCH[6]}" == '"'     ]]
+	[[ '{{"."}}"'                                    =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == '.'              ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == '"'              ]]
 
-	[[ '{{"."}}"}'  =~ $TAG_QUOTE_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'      ]]
-	[[ "${BASH_REMATCH[6]}" == '"}'     ]]
+	[[ '{{"."}}"}'                                   =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == '.'              ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == '"}'             ]]
 
-	[[ '{{"."}}"}}'  =~ $TAG_QUOTE_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'       ]]
-	[[ "${BASH_REMATCH[6]}" == '"}}'     ]]
+	[[ '{{"."}}"}}'                                  =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == '.'              ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == '"}}'            ]]
 
-	[[ '{{"."}}{{"."}}'  =~ $TAG_QUOTE_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'           ]]
-	[[ "${BASH_REMATCH[6]}" == '{{"."}}'     ]]
+	[[ '{{"."}}{{"."}}'                              =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == '.'              ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == '{{"."}}'        ]]
 
-	[[ '{{"."}}.{{"."}}'  =~ $TAG_QUOTE_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'            ]]
-	[[ "${BASH_REMATCH[6]}" == '.{{"."}}'     ]]
+	[[ '{{"."}}.{{"."}}'                             =~ $TAG_QUOTE_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}" == ''               ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}" == '.'              ]]
+	[[ "${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}" == '.{{"."}}'       ]]
 }
 
 @test "TAG_STATEMENT_REGEX: should fail on invalid statement script tag" {
@@ -1054,7 +1412,7 @@ setup() {
 	[[ ! "<%>"       =~ $TAG_STATEMENT_REGEX ]]
 	[[ ! "<% %>"     =~ $TAG_STATEMENT_REGEX ]]
 	[[ ! "<% tag %>" =~ $TAG_STATEMENT_REGEX ]]
-	[[ ! "<% % %>"   =~ $TAG_STATEMENT_REGEX ]]
+	[[   "<% % %>"   =~ $TAG_STATEMENT_REGEX ]]
 	[[ ! "<%% %%>"   =~ $TAG_STATEMENT_REGEX ]] # TODO
 
 	#
@@ -1065,7 +1423,7 @@ setup() {
 	reset_template_regexes
 
 	[[ ! "<%% %>"   =~ $TAG_STATEMENT_REGEX ]]
-	[[ ! "<% $ %>"  =~ $TAG_STATEMENT_REGEX ]]
+	[[   "<% $ %>"  =~ $TAG_STATEMENT_REGEX ]]
 }
 
 @test "TAG_STATEMENT_REGEX: should match on valid statement script tag" {
@@ -1113,43 +1471,50 @@ setup() {
 	reset_delims
 	reset_template_regexes
 
-	[[ '<%%.%>.'  =~ $TAG_STATEMENT_REGEX ]]
-	declare -p BASH_REMATCH
-	[[ "${BASH_REMATCH[1]}" == '.'     ]]
-	[[ "${BASH_REMATCH[5]}" == '.'     ]]
+	[[ '<%%.%>.'                                         =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_FMT}]}" == ''                   ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_TXT}]}" == '.'                  ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_END}]}" == '.'                  ]]
 
-	[[ '<%%.%><'  =~ $TAG_STATEMENT_REGEX ]]
-	declare -p BASH_REMATCH
-	[[ "${BASH_REMATCH[1]}" == '.'     ]]
-	[[ "${BASH_REMATCH[5]}" == '<'     ]]
+	[[ '<%%.%><'                                         =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_FMT}]}" == ''                   ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_TXT}]}" == '.'                  ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_END}]}" == '<'                  ]]
 
-	[[ '<%%.%><%'  =~ $TAG_STATEMENT_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'      ]]
-	[[ "${BASH_REMATCH[5]}" == '<%'     ]]
+	[[ '<%%.%><%'                                        =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_FMT}]}" == ''                   ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_TXT}]}" == '.'                  ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_END}]}" == '<%'                 ]]
 
-	[[ '<%%.%><%%'  =~ $TAG_STATEMENT_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'       ]]
-	[[ "${BASH_REMATCH[5]}" == '<%%'     ]]
+	[[ '<%%.%><%%'                                       =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_FMT}]}" == ''                   ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_TXT}]}" == '.'                  ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_END}]}" == '<%%'                ]]
 
-	[[ '<%%.%>>'  =~ $TAG_STATEMENT_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'     ]]
-	[[ "${BASH_REMATCH[5]}" == '>'     ]]
+	[[ '<%%.%>>'                                         =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_FMT}]}" == ''                   ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_TXT}]}" == '.'                  ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_END}]}" == '>'                  ]]
 
-	[[ '<%%.%>%>'  =~ $TAG_STATEMENT_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'      ]]
-	[[ "${BASH_REMATCH[5]}" == '%>'     ]]
+	[[ '<%%.%>%>'                                        =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_FMT}]}" == ''                   ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_TXT}]}" == '.'                  ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_END}]}" == '%>'                 ]]
 
-	[[ '<%%.%>"%'  =~ $TAG_STATEMENT_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'      ]]
-	[[ "${BASH_REMATCH[5]}" == '"%'     ]]
+	[[ '<%%.%>"%'                                        =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_FMT}]}" == ''                   ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_TXT}]}" == '.'                  ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_END}]}" == '"%'                 ]]
 
-	[[ '<%%.%><%%.%>'  =~ $TAG_STATEMENT_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'           ]]
-	[[ "${BASH_REMATCH[5]}" == '<%%.%>'     ]]
+	[[ '<%%.%><%%.%>'                                    =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_FMT}]}" == ''                   ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_TXT}]}" == '.'                  ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_END}]}" == '<%%.%>'             ]]
 
-	[[ '<%%.%>.<%%.%>'  =~ $TAG_STATEMENT_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'            ]]
-	[[ "${BASH_REMATCH[5]}" == '.<%%.%>'     ]]
+	[[ '<%%.%>.<%%.%>'                                   =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_FMT}]}" == ''                   ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_TXT}]}" == '.'                  ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_END}]}" == '.<%%.%>'            ]]
 
 	#
 	# Custom Delims
@@ -1158,35 +1523,43 @@ setup() {
 	parse_tag_delims "{{ }}"
 	reset_template_regexes
 
-	[[ '{{%.}}.'  =~ $TAG_STATEMENT_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'     ]]
-	[[ "${BASH_REMATCH[5]}" == '.'     ]]
+	[[ '{{%.}}.'                                         =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_FMT}]}" == ''                   ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_TXT}]}" == '.'                  ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_END}]}" == '.'                  ]]
 
-	[[ '{{%.}}{'  =~ $TAG_STATEMENT_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'     ]]
-	[[ "${BASH_REMATCH[5]}" == '{'     ]]
+	[[ '{{%.}}{'                                         =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_FMT}]}" == ''                   ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_TXT}]}" == '.'                  ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_END}]}" == '{'                  ]]
 
-	[[ '{{%.}}{{'  =~ $TAG_STATEMENT_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'      ]]
-	[[ "${BASH_REMATCH[5]}" == '{{'     ]]
+	[[ '{{%.}}{{'                                        =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_FMT}]}" == ''                   ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_TXT}]}" == '.'                  ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_END}]}" == '{{'                 ]]
 
-	[[ '{{%.}}{{%'  =~ $TAG_STATEMENT_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'       ]]
-	[[ "${BASH_REMATCH[5]}" == '{{%'     ]]
+	[[ '{{%.}}{{%'                                       =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_FMT}]}" == ''                   ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_TXT}]}" == '.'                  ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_END}]}" == '{{%'                ]]
 
-	[[ '{{%.}}}'  =~ $TAG_STATEMENT_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'     ]]
-	[[ "${BASH_REMATCH[5]}" == '}'     ]]
+	[[ '{{%.}}}'                                         =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_FMT}]}" == ''                   ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_TXT}]}" == '.'                  ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_END}]}" == '}'                  ]]
 
-	[[ '{{%.}}}}'  =~ $TAG_STATEMENT_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'      ]]
-	[[ "${BASH_REMATCH[5]}" == '}}'     ]]
+	[[ '{{%.}}}}'                                        =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_FMT}]}" == ''                   ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_TXT}]}" == '.'                  ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_END}]}" == '}}'                 ]]
 
-	[[ '{{%.}}{{%.}}'  =~ $TAG_STATEMENT_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'           ]]
-	[[ "${BASH_REMATCH[5]}" == '{{%.}}'     ]]
+	[[ '{{%.}}{{%.}}'                                    =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_FMT}]}" == ''                   ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_TXT}]}" == '.'                  ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_END}]}" == '{{%.}}'             ]]
 
-	[[ '{{%.}}.{{%.}}'  =~ $TAG_STATEMENT_REGEX ]]
-	[[ "${BASH_REMATCH[1]}" == '.'            ]]
-	[[ "${BASH_REMATCH[5]}" == '.{{%.}}'     ]]
+	[[ '{{%.}}.{{%.}}'                                   =~ $TAG_STATEMENT_REGEX ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_FMT}]}" == ''                   ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_TXT}]}" == '.'                  ]]
+	[[ "${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_END}]}" == '.{{%.}}'            ]]
 }

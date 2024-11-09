@@ -61,6 +61,8 @@ customize delimiters:
         set tag delimiters (default: '<% %>')
   --tag-stmt-delim 'x'
         set tag statement delimiter (default: '%')
+  --tag-fmt-delims 'x x'
+        set tag format-specifier delimiters (default: '| |')
   --stmt-delim 'x+'
         set statement delimiter (default: '%')
   --stmt-block-delims 'x+ x+'
@@ -83,6 +85,7 @@ customize delimiters:
 supported environment variables:
     BASH_TPL_TAG_DELIMS
     BASH_TPL_TAG_STMT_DELIM
+    BASH_TPL_TAG_FMT_DELIMS
     BASH_TPL_STMT_DELIM
     BASH_TPL_STMT_BLOCK_DELIMS
     BASH_TPL_TEXT_DELIM
@@ -106,6 +109,7 @@ USAGE
 
 TAG_DELIM_REGEX='^([^[:blank:]])([^[:blank:]]) ([^[:blank:]])([^[:blank:]])$'
 TAG_STMT_DELIM_REGEX='^([^[:blank:]])$'
+TAG_FMT_DELIM_REGEX='^([^[:blank:]]) ([^[:blank:]])$'
 STMT_DELIM_REGEX='^([^[:blank:]]+)$'
 STMT_BLOCK_DELIM_REGEX='^([^[:blank:]]+) ([^[:blank:]]+)$'
 STMT_BLOCK_TEXT_REGEX='^([^[:blank:]]+\ ?)$' # Optional trailing ' '
@@ -120,6 +124,9 @@ function reset_delims() {
 	TAG_STOP_DELIM2='>'
 
 	TAG_STMT_DELIM='%'
+
+	TAG_FMT_START_DELIM='|'
+	TAG_FMT_STOP_DELIM='|'
 
 	STMT_DELIM='%'
 
@@ -163,6 +170,21 @@ function parse_tag_stmt_delim() {
 		TAG_STMT_DELIM="${BASH_REMATCH[1]}"
 	else
 		echo "Error: Invalid or missing tag stmt delimiter value for ${2-tag stmt delim}: '${1}'" >&2
+		exit 1
+	fi
+}
+
+##
+# parse_tag_fmt_delims
+# $1 = delims
+# $2 = src (for error msg)
+#
+function parse_tag_fmt_delims() {
+	if [[ "${1}" =~ $TAG_FMT_DELIM_REGEX ]]; then
+		TAG_FMT_START_DELIM="${BASH_REMATCH[1]}"
+		TAG_FMT_STOP_DELIM="${BASH_REMATCH[2]}"
+	else
+		echo "Error: Invalid or missing tag fmt delimiter values for ${2-tag fmt delims}: '${1}'" >&2
 		exit 1
 	fi
 }
@@ -268,7 +290,7 @@ function reset_template_regexes() {
 	# Create regexes
 	#
 
-	local d ds d1 d2 d3 d4
+	local d ds d1 d1_ d2 d2_ d3 d3_ d4 d4_ f1 f2 f2_
 
 	d="${DIRECTIVE_DELIM}"
 	escape_regex d
@@ -297,27 +319,59 @@ function reset_template_regexes() {
 	TEXT_REGEX='^([[:blank:]]*)([^[:blank:]](.*))?$'
 
 	d1="${TAG_START_DELIM1}"
+	d1_="${d1}"
 	escape_regex d1
 
 	d2="${TAG_START_DELIM2}"
+	d2_="${d2}"
 	escape_regex d2
 
 	d3="${TAG_STOP_DELIM1}"
+	d3_="${d3}"
 	escape_regex d3
 
 	d4="${TAG_STOP_DELIM2}"
+	d4_="${d4}"
 	escape_regex d4
 
 	ds="${TAG_STMT_DELIM}"
 	escape_regex ds
 
-	TAG_TEXT_REGEX="^([^${d1}]+|${d1}$|${d1}[^${d1}${d2}]+)(.*)"
+	f1="${TAG_FMT_START_DELIM}"
+	escape_regex f1
 
-	TAG_STD_REGEX="^${d1}${d2}((([^${d3}])|(${d3}[^${d4}]))*)${d3}${d4}(.*)"
+	f2="${TAG_FMT_STOP_DELIM}"
+	f2_="${f2}"
+	escape_regex f2
 
-	TAG_QUOTE_REGEX="^${d1}${d2}\"((([^\"])|(\"[^${d3}])|(\"${d3}[^${d4}]))*)\"${d3}${d4}(.*)"
+	local fmt_regex std_regex quote_regex stmt_regex
 
-	TAG_STATEMENT_REGEX="^${d1}${d2}${ds}((([^${d3}])|(${d3}[^${d4}]))*)${d3}${d4}(.*)"
+	fmt_regex="${f1}([^${f2_}]*)${f2}"
+
+	TAG_TEXT_REGEX="^([^${d1_}]+|${d1}$|${d1}[^${d1_}${d2_}]+)(.*)"
+
+	std_regex="((([^${d3_}])|(${d3}[^${d4_}]))*)"
+
+	# No [[:space:]] checks after fmt_regex as we'll let std_regex pick them up then trim them
+	TAG_STD_REGEX="^${d1}${d2}[[:space:]]*(${fmt_regex})?${std_regex}${d3}${d4}(.*)"
+	TAG_STD_MATCH_IDX_FMT=2
+	TAG_STD_MATCH_IDX_TXT=3
+	TAG_STD_MATCH_IDX_END=7
+
+	quote_regex="\"((([^\"])|(\"[^${d3_}])|(\"${d3}[^${d4_}]))*)\""
+
+	TAG_QUOTE_REGEX="^${d1}${d2}[[:space:]]*(${fmt_regex})?[[:space:]]*${quote_regex}[[:space:]]*${d3}${d4}(.*)"
+	TAG_QUOTE_MATCH_IDX_FMT=2
+	TAG_QUOTE_MATCH_IDX_TXT=3
+	TAG_QUOTE_MATCH_IDX_END=8
+
+	stmt_regex="${ds}((([^${d3_}])|(${d3}[^${d4_}]))*)"
+
+	# No trailing [[:space:]] check as we'll let std_regex pick them up then trim them
+	TAG_STATEMENT_REGEX="^${d1}${d2}[[:space:]]*(${fmt_regex})?[[:space:]]*${stmt_regex}${d3}${d4}(.*)"
+	TAG_STATEMENT_MATCH_IDX_FMT=2
+	TAG_STATEMENT_MATCH_IDX_TXT=3
+	TAG_STATEMENT_MATCH_IDX_END=7
 
 	# printf "# ---> delim regexes:"
 	# printf "# STATEMENT_BLOCK_START_REGEX: '%s'\n" "${STATEMENT_BLOCK_START_REGEX}"
@@ -349,9 +403,9 @@ function trim() {
 # usage: escape_string varname
 #
 function escape_string {
+	local e="${!1}"
 	# Escape '\' first since we'll be adding more later
-	local e="${!1//$'\\'/\\}"
-	# Some man pages mention \0NNN but in practice it seems \NNN is also works.
+	# Octal support = \0[0-9]{0,3}
 	e="${e//\\/\\\\}"
 	e="${e//\'/\\0047}"
 	e="${e//$'\a'/\\a}"
@@ -369,12 +423,24 @@ function escape_string {
 # usage: escape_regex varname
 #
 function escape_regex() {
-	local result
-	# shellcheck disable=SC2001  # Too complex for ${variable//search/replace}
-	# shellcheck disable=SC2016  # Not using expansion, prefer single quotes
-	# shellcheck disable=SC2034  # ref is used
-	result=$(sed 's/[][\.|$(){}?+*^]/\\&/g' <<< "${!1}")
-	printf -v "${1}" "%s" "${result}"
+	local e="${!1}"
+	# Escape '\' first since we'll be adding more after
+	e="${e//\\/\\\\}"
+	e="${e//'$'/\\$}"
+	e="${e//'*'/\\*}"
+	e="${e//'+'/\\+}"
+	e="${e//'.'/\\.}"
+	e="${e//'?'/\\?}"
+	e="${e//'^'/\\^}"
+	e="${e//'|'/\\|}"
+	e="${e//'('/\\(}"
+	e="${e//')'/\\)}"
+	e="${e//'['/\\[}"
+	e="${e//']'/\\]}"
+	e="${e//'{'/\\{}"
+	local RBRACE='}'
+	e="${e//'}'/\\${RBRACE}}"
+	printf -v "${1}" "%s" "${e}"
 }
 
 ##
@@ -537,7 +603,7 @@ function print_text() {
 # $2 = full line of text to process
 #
 function process_tags() {
-	local stmt_indent line formats args arg quoted
+	local stmt_indent line formats args fmt arg quoted
 	stmt_indent="${1}"
 	line="${2}"
 	formats=""
@@ -554,25 +620,32 @@ function process_tags() {
 			line="${BASH_REMATCH[2]}"
 		elif [[ "${line}" =~ $TAG_QUOTE_REGEX ]]; then
 			# echo "# QUOTE TAG MATCH: $(declare -p BASH_REMATCH)" >&2
-			formats="${formats}%s"
-			args+=("\"${BASH_REMATCH[1]}\"")
-			line="${BASH_REMATCH[6]}"
+			fmt="${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_FMT}]}"
+			trim fmt
+			arg="${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_TXT}]}"
+			formats="${formats}${fmt:-%s}"
+			args+=("\"${arg}\"")
+			line="${BASH_REMATCH[${TAG_QUOTE_MATCH_IDX_END}]}"
 		elif [[ "${line}" =~ $TAG_STATEMENT_REGEX ]]; then
 			# echo "# STMT TAG MATCH: $(declare -p BASH_REMATCH)" >&2
-			arg="${BASH_REMATCH[1]}"
+			fmt="${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_FMT}]}"
+			trim fmt
+			arg="${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_TXT}]}"
 			trim arg
-			formats="${formats}%s"
+			formats="${formats}${fmt:-%s}"
 			args+=("\"\$(${arg})\"")
-			line="${BASH_REMATCH[5]}"
+			line="${BASH_REMATCH[${TAG_STATEMENT_MATCH_IDX_END}]}"
 		# Check standard regex last as it's a super-set of quote and stmt regex
-		#
+		# But check fmt regex first
 		elif [[ "${line}" =~ $TAG_STD_REGEX ]]; then
 			# echo "# STD TAG MATCH: $(declare -p BASH_REMATCH)" >&2
-			arg="${BASH_REMATCH[1]}"
+			fmt="${BASH_REMATCH[${TAG_STD_MATCH_IDX_FMT}]}"
+			trim fmt
+			arg="${BASH_REMATCH[${TAG_STD_MATCH_IDX_TXT}]}"
 			trim arg
-			formats="${formats}%s"
+			formats="${formats}${fmt:-%s}"
 			args+=("\"${arg}\"")
-			line="${BASH_REMATCH[5]}"
+			line="${BASH_REMATCH[${TAG_STD_MATCH_IDX_END}]}"
 		# Assume next character is TEXT - extract and process remainder
 		#
 		elif [[ "${line}" =~ (.)(.*) ]]; then
@@ -597,6 +670,7 @@ function process_tags() {
 
 DELIM_DIR_TAG_REGEX='[Tt][Aa][Gg]\s*=\s*"([^"]*)"'
 DELIM_DIR_TAG_STMT_REGEX='[Tt][Aa][Gg][_-]?[Ss][Tt][Mm][Tt]\s*=\s*"([^"]*)"'
+DELIM_DIR_TAG_FMT_REGEX='[Tt][Aa][Gg][_-]?[Ff][Mm][Tt]\s*=\s*"([^"]*)"'
 DELIM_DIR_STMT_REGEX='[Ss][Tt][Mm][Tt]\s*=\s*"([^"]*)"'
 DELIM_DIR_STMT_BLOCK_REGEX='[Ss][Tt][Mm][Tt][_-]?[Bb][Ll][Oo][Cc][Kk]\s*=\s*"([^"]*)"'
 DELIM_DIR_TXT_REGEX='[Tt][Xx][Tt]\s*=\s*"([^"]*)"'
@@ -637,6 +711,7 @@ function process_directive() {
 				--block-indent "${BASE_BLOCK_INDENT}${BLOCK_INDENT}" \
 				--tag-delims "${TAG_START_DELIM1}${TAG_START_DELIM2} ${TAG_STOP_DELIM1}${TAG_STOP_DELIM2}" \
 				--tag-stmt-delim "${TAG_STMT_DELIM}" \
+				--tag-fmt-delims "${TAG_FMT_START_DELIM} ${TAG_FMT_STOP_DELIM}" \
 				--stmt-delim "${STMT_DELIM}" \
 				--stmt-block-delims "${STMT_BLOCK_START_DELIM} ${STMT_BLOCK_STOP_DELIM}" \
 				--txt-delim "${TEXT_DELIM}" \
@@ -655,6 +730,11 @@ function process_directive() {
 			#
 			if [[ "${3}" =~ $DELIM_DIR_TAG_STMT_REGEX ]]; then
 				parse_tag_stmt_delim "${BASH_REMATCH[1]}" 'DELIMS TAG-STMT directive'
+			fi
+			# TAG-FMT
+			#
+			if [[ "${3}" =~ $DELIM_DIR_TAG_FMT_REGEX ]]; then
+				parse_tag_fmt_delims "${BASH_REMATCH[1]}" 'DELIMS TAG-FMT directive'
 			fi
 			# STMT
 			#
@@ -1157,6 +1237,10 @@ function parse_env_delims() {
 		parse_tag_stmt_delim "${BASH_TPL_TAG_STMT_DELIM}" "BASH_TPL_TAG_STMT_DELIM"
 	fi
 
+	if [ -n "${BASH_TPL_TAG_FMT_DELIMS}" ]; then
+		parse_tag_fmt_delims "${BASH_TPL_TAG_FMT_DELIMS}" "BASH_TPL_TAG_FMT_DELIMS"
+	fi
+
 	if [ -n "${BASH_TPL_STMT_DELIM}" ]; then
 		parse_stmt_delim "${BASH_TPL_STMT_DELIM}" "BASH_TPL_STMT_DELIM"
 	fi
@@ -1217,6 +1301,10 @@ function parse_args() {
 				;;
 			--tag-stmt-delim)
 				parse_tag_stmt_delim "$2" "$1"
+				shift 2
+				;;
+			--tag-fmt-delims)
+				parse_tag_fmt_delims "$2" "$1"
 				shift 2
 				;;
 			--stmt-delim)

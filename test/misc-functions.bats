@@ -96,9 +96,9 @@ setup() {
 	escape_regex value
 	[[ "${value}" == 'abcABC123_-' ]]
 
-	value='][\.|$(){}?+*^'
+	value="\\\$*+.?^|()[]{}"
 	escape_regex value
-	[[ "${value}" == '\]\[\\\.\|\$\(\)\{\}\?\+\*\^' ]]
+	[[ "${value}" == '\\\$\*\+\.\?\^\|\(\)\[\]\{\}' ]]
 
 	value='{}'
 	escape_regex value
