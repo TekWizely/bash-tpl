@@ -302,7 +302,7 @@ function reset_template_regexes() {
 
 	d="${STMT_DELIM}"
 	escape_regex d
-	STATEMENT_REGEX="^([[:blank:]]*)${d}[[:blank:]]+(.+)\$"
+	STATEMENT_REGEX="^([[:blank:]]*)${d}[[:blank:]]+([^[:blank:]].*)\$"
 
 	d="${STMT_BLOCK_START_DELIM}"
 	escape_regex d

@@ -296,6 +296,9 @@ setup() {
 	[[ ! ""           =~ $STATEMENT_REGEX ]]
 	[[ ! "statement"  =~ $STATEMENT_REGEX ]]
 	[[ ! "%"          =~ $STATEMENT_REGEX ]]
+	[[ ! "% "          =~ $STATEMENT_REGEX ]]
+	[[ ! "%  "         =~ $STATEMENT_REGEX ]]
+	[[ ! "%    "       =~ $STATEMENT_REGEX ]]
 	[[ ! "%statement" =~ $STATEMENT_REGEX ]]
 
 	parse_stmt_delim '$>'
@@ -303,6 +306,8 @@ setup() {
 
 	[[ ! "$"           =~ $STATEMENT_REGEX ]]
 	[[ ! "$>"          =~ $STATEMENT_REGEX ]]
+	[[ ! "$> "         =~ $STATEMENT_REGEX ]]
+	[[ ! "$>  "        =~ $STATEMENT_REGEX ]]
 	[[ ! "$>statement" =~ $STATEMENT_REGEX ]]
 	[[ ! "% statement" =~ $STATEMENT_REGEX ]]
 }
